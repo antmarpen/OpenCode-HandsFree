@@ -6,6 +6,10 @@ export const es: Record<keyof typeof en, string> = {
     "Dicta prompts con Whisper o un proveedor compatible con OpenAI, y deja que el agente lea sus respuestas en voz alta.",
   "settings.section.input": "Entrada: voz a texto",
   "settings.section.output": "Salida: texto a voz",
+  "settings.section.conversation": "Conversación",
+  "settings.tab.input": "Entrada",
+  "settings.tab.output": "Salida",
+  "settings.tab.experimental": "Experimental",
   "settings.engine": "Motor",
   "settings.engine.local": "Local (whisper.cpp / voz del sistema)",
   "settings.engine.cloud": "Nube (compatible con OpenAI)",
@@ -37,6 +41,17 @@ export const es: Record<keyof typeof en, string> = {
   "settings.defaultOutput.description":
     "Cada chat puede cambiarlo desde el botón de altavoz del encabezado.",
   "settings.voice": "Voz",
+  "settings.conversation.default": "Modo conversación en chats nuevos",
+  "settings.conversation.default.description":
+    "Dicta, envía y lee solo, y vuelve a escuchar cuando termina la respuesta.",
+  "settings.conversation.silence": "Silencio para enviar",
+  "settings.conversation.silence.description":
+    "Silencio que cierra el turno, en milisegundos.",
+  "settings.conversation.blur": "Pausar al perder el foco",
+  "settings.conversation.blur.description":
+    "Cierra el micrófono mientras la ventana no está activa.",
+  "settings.conversation.hint":
+    "Con altavoces el micrófono puede oír la respuesta y cortarla solo. Usa auriculares para interrumpir hablando.",
   "settings.voice.description": "Nombre de la voz del sistema en local, o el id de voz del proveedor en la nube.",
   "settings.localEnabled": "Usar la voz del sistema",
   "settings.localEnabled.description":
@@ -91,6 +106,7 @@ export const es: Record<keyof typeof en, string> = {
   "pill.input": "Dictado en este chat",
   "pill.output": "Leer respuestas en este chat",
   "pill.dictate": "Iniciar o detener el dictado",
+  "pill.conversation": "Conversación en este chat",
   "pill.settings": "Abrir ajustes de voz",
   "pill.on": "Sí",
   "pill.off": "No",
@@ -109,6 +125,9 @@ export const es: Record<keyof typeof en, string> = {
   "status.speakFailed": "No se pudo reproducir la respuesta",
   "status.inputOn": "Dictado activado en este chat",
   "status.inputOff": "Dictado desactivado en este chat",
+  "status.conversationOn": "Modo conversación activado en este chat",
+  "status.conversationOff": "Modo conversación desactivado en este chat",
+  "status.conversationBlocked": "Modo conversación en pausa: hay texto escrito en el compositor",
   "status.outputOn": "Se leerán las respuestas en este chat",
   "status.outputOff": "No se leerán las respuestas en este chat",
   "status.voiceOn": "Voz activada en este chat",

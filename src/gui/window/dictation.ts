@@ -15,6 +15,12 @@ export interface Dictation {
   /** Recent input levels, oldest first, from 0 to 1; all zero when idle. */
   readonly levels: () => readonly number[]
   toggle(): Promise<void>
+  /** Starts recording but keeps only a pre-roll until `begin()` (conversation mode). */
+  listen(): Promise<boolean>
+  /** Keeps the pre-roll and starts accumulating the utterance. */
+  begin(): void
+  /** Drops what was captured, such as a reply being played, and holds the pre-roll. */
+  reset(): void
   cancel(): void
 }
 
@@ -31,21 +37,26 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
   let toast: ToastHandle | undefined
   /** Aborts the transcription in flight, so Cancel and Escape drop its result. */
   let inFlight: AbortController | undefined
+  /** A start is waiting for the microphone; guards the polling driver from starting twice. */
+  let starting = false
 
   const notifyError = (title: string, description?: string) => {
     ctx.toast.show({ title, description, variant: "error" })
   }
 
-  const start = async () => {
-    if (handle || working()) return
+  const start = async (hold: boolean, barge = true): Promise<boolean> => {
+    if (handle) return false
+    if (working()) return false
+    // Another start is already waiting for the microphone; treat it as started.
+    if (starting) return true
 
     const session = ctx.sessions.current()
-    if (!session) return
+    if (!session) return false
 
     // The per-chat switch is the gate: off means no dictation at all, from any path.
     if (!readFlags(ctx, session).input) {
       ctx.toast.show({ title: ctx.t("status.inputOff") })
-      return
+      return false
     }
 
     const settings = ctx.stores.settings.value
@@ -55,30 +66,43 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
     if (settings.inputEngine === "local" && localIncomplete) {
       notifyError(ctx.t("status.missingLocal"), ctx.t("status.missingLocal.description"))
       ctx.layout.settings(ctx.id)
-      return
+      return false
     }
 
-    interrupt()
-    await ctx.main(Voice).stop().catch(() => {})
+    starting = true
 
     try {
-      handle = await startRecording({
-        deviceId: settings.transcribe.inputDevice || undefined,
-        onLevel: (level) => setLevels((previous) => [...previous.slice(1), level]),
-      })
-    } catch (error) {
-      notifyError(ctx.t("status.micDenied"), String(error))
-      return
-    }
+      if (barge) {
+        interrupt()
+        await ctx.main(Voice).stop().catch(() => {})
+      }
 
-    setLevels(silentMeter())
-    target = session
-    setRecording(true)
-    toast = ctx.toast.show({
-      title: ctx.t("status.recording"),
-      description: ctx.t("status.recordingDetail"),
-      persistent: true,
-    })
+      try {
+        handle = await startRecording({
+          deviceId: settings.transcribe.inputDevice || undefined,
+          hold,
+          onLevel: (level) => setLevels((previous) => [...previous.slice(1), level]),
+        })
+      } catch (error) {
+        notifyError(ctx.t("status.micDenied"), String(error))
+        return false
+      }
+
+      setLevels(silentMeter())
+      target = session
+      setRecording(true)
+      // Conversation mode listens on its own for minutes; the persistent toast is noise there.
+      if (!hold) {
+        toast = ctx.toast.show({
+          title: ctx.t("status.recording"),
+          description: ctx.t("status.recordingDetail"),
+          persistent: true,
+        })
+      }
+      return true
+    } finally {
+      starting = false
+    }
   }
 
   const stop = async () => {
@@ -135,7 +159,9 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
         ctx.toast.show({ title: ctx.t("status.noSpeech") })
         return
       }
-      if (session) await deliver(session, text)
+      if (session) {
+        await deliver(session, text, { send: readFlags(ctx, session).conversation })
+      }
     } catch (error) {
       if (!controller.signal.aborted) {
         notifyError(ctx.t("status.transcribeFailed"), String(error))
@@ -172,7 +198,13 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
     working,
     active: () => recording() || working(),
     levels,
-    toggle: () => (handle ? stop() : start()),
+    toggle: async () => {
+      if (handle) await stop()
+      else await start(false)
+    },
+    listen: () => (handle ? Promise.resolve(false) : start(true, false)),
+    begin: () => handle?.begin(),
+    reset: () => handle?.reset(),
     cancel,
   }
 }

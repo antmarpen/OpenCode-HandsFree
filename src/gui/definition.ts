@@ -17,6 +17,14 @@ export const Settings = Schema.Struct({
   /** Defaults for sessions that never chose; per-chat switches live in the session store. */
   defaultInput: Schema.Boolean,
   defaultOutput: Schema.Boolean,
+  conversation: Schema.Struct({
+    /** New chats start in conversation mode. */
+    default: Schema.Boolean,
+    /** Silence after speech that closes the turn, in milliseconds. */
+    silenceMs: Schema.Number,
+    /** Close the microphone while the window is not focused. */
+    suspendOnBlur: Schema.Boolean,
+  }),
   transcribe: Schema.Struct({
     /** Empty means the system default input device. */
     inputDevice: Schema.String,
@@ -47,6 +55,8 @@ export const Settings = Schema.Struct({
 export const SessionVoice = Schema.Struct({
   input: Schema.optional(Schema.Boolean),
   output: Schema.optional(Schema.Boolean),
+  /** Hands-free loop: implies input and output while it is on. */
+  conversation: Schema.optional(Schema.Boolean),
 })
 
 export const definition = Plugin.define({
@@ -57,6 +67,11 @@ export const definition = Plugin.define({
       autoSend: false,
       defaultInput: false,
       defaultOutput: false,
+      conversation: {
+        default: false,
+        silenceMs: 1200,
+        suspendOnBlur: true,
+      },
       transcribe: {
         inputDevice: "",
         localBinary: "whisper-cli",

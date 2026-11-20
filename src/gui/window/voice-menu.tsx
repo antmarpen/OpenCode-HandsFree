@@ -166,6 +166,13 @@ function VoicePopover(props: {
         disabled={!props.status.outputReady()}
         onChange={(value) => setFlag(ctx, props.session, "output", value)}
       />
+      <SwitchLine
+        icon={<ctx.ui.Icon name="outline-rotate-clockwise" size="small" />}
+        label={ctx.t("pill.conversation")}
+        checked={flags().conversation}
+        disabled={!props.status.inputReady() || !props.status.outputReady()}
+        onChange={(value) => setFlag(ctx, props.session, "conversation", value)}
+      />
 
       <Divider />
 

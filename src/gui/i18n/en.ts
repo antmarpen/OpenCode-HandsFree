@@ -4,6 +4,10 @@ export const en = {
     "Dictate prompts with Whisper or an OpenAI-compatible provider, and let the agent read its replies aloud.",
   "settings.section.input": "Input: voice to text",
   "settings.section.output": "Output: text to voice",
+  "settings.section.conversation": "Conversation",
+  "settings.tab.input": "Input",
+  "settings.tab.output": "Output",
+  "settings.tab.experimental": "Experimental",
   "settings.engine": "Engine",
   "settings.engine.local": "Local (whisper.cpp / system voice)",
   "settings.engine.cloud": "Cloud (OpenAI-compatible)",
@@ -35,6 +39,17 @@ export const en = {
   "settings.defaultOutput.description":
     "Each chat can override it from the speaker button in the chat header.",
   "settings.voice": "Voice",
+  "settings.conversation.default": "Conversation mode in new chats",
+  "settings.conversation.default.description":
+    "Dictates, sends and reads on its own, and listens again when the reply ends.",
+  "settings.conversation.silence": "Silence to send",
+  "settings.conversation.silence.description":
+    "Silence that closes the turn, in milliseconds.",
+  "settings.conversation.blur": "Pause when the window loses focus",
+  "settings.conversation.blur.description":
+    "Closes the microphone while the window is not active.",
+  "settings.conversation.hint":
+    "With speakers the microphone can hear the reply and cut it on its own. Use headphones to interrupt by talking.",
   "settings.voice.description": "System voice name for local, or the provider's voice id for cloud.",
   "settings.localEnabled": "Use the system voice",
   "settings.localEnabled.description":
@@ -89,6 +104,7 @@ export const en = {
   "pill.input": "Dictation in this chat",
   "pill.output": "Read replies in this chat",
   "pill.dictate": "Start or stop dictation",
+  "pill.conversation": "Conversation in this chat",
   "pill.settings": "Open voice settings",
   "pill.on": "On",
   "pill.off": "Off",
@@ -107,6 +123,9 @@ export const en = {
   "status.speakFailed": "Could not play the reply",
   "status.inputOn": "Dictation on for this chat",
   "status.inputOff": "Dictation off for this chat",
+  "status.conversationOn": "Conversation mode on for this chat",
+  "status.conversationOff": "Conversation mode off for this chat",
+  "status.conversationBlocked": "Conversation paused: the composer has text",
   "status.outputOn": "Replies will be read in this chat",
   "status.outputOff": "Replies will not be read in this chat",
   "status.voiceOn": "Voice on for this chat",

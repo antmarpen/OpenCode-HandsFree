@@ -5,6 +5,7 @@ import type { definition } from "./definition"
 import { getSecretState } from "./settings/secrets"
 import { createVoiceStatus } from "./status"
 import { registerCommands } from "./window/commands"
+import { createConversation } from "./window/conversation"
 import { createDelivery } from "./window/delivery"
 import { createDictation } from "./window/dictation"
 import { registerEscape } from "./window/escape"
@@ -25,6 +26,7 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
 
   const speech = getSpeech(ctx)
   const dictation = createDictation(ctx, createDelivery(ctx), speech.cancel)
+  const conversation = createConversation(ctx, dictation, speech, status)
 
   const stop = () => {
     speech.cancel()
@@ -33,10 +35,10 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
 
   subscribeReplies(ctx, speech.speak)
   registerCommands(ctx, dictation, status, stop)
-  registerEscape(dictation)
-  registerPill(ctx, dictation, status, speech, stop)
+  registerEscape(dictation, conversation)
+  registerPill(ctx, dictation, status, speech, stop, conversation)
   registerHeaderControl(ctx, status)
-  registerStopPill(ctx, status, dictation, speech.speaking, stop)
+  registerStopPill(ctx, status, dictation, conversation, speech.speaking, stop)
   registerSettingsPage(ctx)
 
   onCleanup(() => {

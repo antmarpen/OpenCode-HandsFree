@@ -4,6 +4,7 @@ Plugin de voz bidireccional para **OpenCode Desktop**:
 
 - **Dictado**: graba el micrófono, transcribe con whisper.cpp local o con un proveedor compatible con OpenAI (Whisper) y deja el texto en el prompt.
 - **Lectura**: al terminar cada bloque de texto del agente, lo lee en voz alta con la voz del sistema (SAPI en Windows) o con un TTS en la nube.
+- **Conversación (experimental)**: escucha sola, cierra el turno al detectar silencio, envía el mensaje y lee la respuesta, y vuelve a escuchar. La ✕ de la píldora, o Escape, termina el modo.
 - **Por chat**: cada sesión tiene su propio interruptor de entrada y salida, persistente. Los chats nuevos heredan el valor por defecto de los ajustes.
 - **Ajustes propios** en **Settings > Voice**, sin tocar `opencode.json` salvo para cargar el plugin.
 
@@ -52,6 +53,7 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 
 **Settings > Voice**:
 
+- **Pestañas**: `Entrada`, `Salida` y `Experimental`, para que la página no sea un scroll largo.
 - Motor de entrada y de salida: `Local` o `Nube`.
 - **Micrófono**: se puede elegir el dispositivo de entrada (o dejar el predeterminado del sistema). La lista se carga desde el propio equipo.
 - **Dispositivo de salida**: dónde se reproducen las respuestas; también se puede dejar el predeterminado del sistema.
@@ -61,6 +63,7 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 - **Salida local**: hay que activar explícitamente `Usar la voz del sistema`; hasta entonces la lectura queda deshabilitada, igual que el dictado sin configurar.
 - Claves de API manuales: se guardan **cifradas** con `safeStorage` (DPAPI en Windows). Nunca van a `opencode.json`; si el llavero no está disponible, se guardan como texto plano y se avisa en el log.
 - Valor por defecto de los interruptores por chat y botón **Probar** para la salida.
+- **Experimental**: activa el modo conversación para chats nuevos, el silencio que cierra el turno (1200 ms por defecto) y la pausa al perder el foco.
 
 La nube asume el contrato de OpenAI. Si tu proveedor usa otro formato (por ejemplo Deepgram), cambia `transcribeCloud` en `src/gui/main/transcribe-cloud.ts` y `speakCloud` en `src/gui/main/speech-cloud.ts`: el resto del plugin no cambia.
 
@@ -114,6 +117,8 @@ Las convenciones de código están en [`AGENTS.md`](./AGENTS.md): código en ing
 - El texto se limpia de Markdown, bloques de código y URLs antes de hablarlo, y se trocea en frases de ~600 caracteres.
 - El dictado no se detiene solo al hacer una pausa: hay que volver a pulsar el atajo o el micrófono. Si la captura es silenciosa, el aviso lo distingue de “no se ha detectado voz”.
 - Las credenciales de OpenCode se resuelven en la parte servidor y se entregan al proceso principal por el servidor local; no se escriben en la configuración ni en los logs.
+- En modo conversación el micrófono queda abierto mientras esperas y mientras se lee la respuesta. Hablar por encima de la lectura la corta y empieza un turno nuevo; con altavoces el micro puede oírse a sí mismo, así que para interrumpir hablando conviene usar auriculares.
+- El dictado manual y la conversación comparten un solo grabador; en conversación solo se guarda un pre-roll de 1,2 s hasta que hay voz, así que una espera de minutos no acumula audio.
 - El formato de salida de la nube ya no depende del reproductor del sistema: `mp3`, `wav`, `opus`, `aac` y `flac` se decodifican en la ventana. Si el proveedor responde con JSON o texto, el error muestra el cuerpo de la respuesta.
 - Desactivar el plugin entero: **Settings > Extensions > Plugins**, o quita la entrada de `opencode.jsonc`.
 - Logs: `~/.local/share/opencode/log/opencode.log`.

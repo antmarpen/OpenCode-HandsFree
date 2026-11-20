@@ -13,6 +13,10 @@ export interface Recording {
 export interface RecordingHandle {
   stop(): Promise<Recording>
   cancel(): void
+  /** Keeps the buffered pre-roll and starts accumulating the utterance. */
+  begin(): void
+  /** Drops the buffer and goes back to the pre-roll, e.g. after cutting playback. */
+  reset(): void
 }
 
 export interface RecordingOptions {
@@ -20,9 +24,16 @@ export interface RecordingOptions {
   readonly deviceId?: string
   /** Receives the smoothed input level, from 0 to 1, while the microphone records. */
   onLevel?(level: number): void
+  /**
+   * Keep only a short pre-roll until `begin()` is called. Conversation mode listens for
+   * minutes and must not hold every second of silence in memory.
+   */
+  readonly hold?: boolean
 }
 
 const TARGET_RATE = 16_000
+/** Audio kept while waiting for speech, so the first word is not cut. */
+const PRE_ROLL_SECONDS = 1.2
 
 /**
  * Records the microphone in the renderer and returns a 16 kHz mono WAV, which both
@@ -55,12 +66,24 @@ export async function startRecording(options: RecordingOptions = {}): Promise<Re
 
   const chunks: Float32Array[] = []
   const smoother = createLevelSmoother()
+  const preRoll = Math.ceil(PRE_ROLL_SECONDS * sourceRate)
+  let held = 0
+  let holding = options.hold ?? false
   let finished = false
 
   processor.onaudioprocess = (event) => {
     if (finished) return
     const samples = event.inputBuffer.getChannelData(0)
     chunks.push(new Float32Array(samples))
+
+    if (holding) {
+      held += samples.length
+      while (held > preRoll && chunks.length > 0) {
+        held -= chunks[0].length
+        chunks.shift()
+      }
+    }
+
     options.onLevel?.(smoother(rmsToLevel(rms(samples))))
   }
 
@@ -87,6 +110,14 @@ export async function startRecording(options: RecordingOptions = {}): Promise<Re
   return {
     cancel() {
       teardown()
+    },
+    begin() {
+      holding = false
+    },
+    reset() {
+      chunks.length = 0
+      held = 0
+      holding = true
     },
     async stop() {
       teardown()

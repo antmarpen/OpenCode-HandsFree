@@ -4,38 +4,47 @@ import { waveMask } from "../audio/meter"
 import type { Ctx } from "../context"
 import { readFlags } from "../flags"
 import type { VoiceStatus } from "../status"
+import type { Conversation } from "./conversation"
 import type { Dictation } from "./dictation"
 import type { Speech } from "./speech"
 
 /**
- * The two bar glyphs the app ships, alternated so the icon reads as a moving level
- * meter while the audio is being transcribed. The plugin API has no custom animated
- * icons, so this is the closest the host allows.
- */
-const WORKING_ICONS = ["outline-wave-audio", "outline-audio"] as const
-const FRAME_MS = 300
-
-/**
- * A zero-width space closes the pill title while the capsule carries a painted wave or
- * action, so the CSS and the click zone below can find only this plugin's capsule.
+ * A zero-width space closes every title, so the CSS and the click zone below can find
+ * only this plugin's capsule.
  */
 const MARK = "\u200B"
 
-/** The live wave sits between the icon and the action glyph. */
+/** Icon area, live wave and action glyph inside the capsule. */
+const ICON_SIZE = 14
+const ICON_GAP = 8
+const SIDE = 10
 const WAVE_WIDTH = 200
 const WAVE_HEIGHT = 16
-/** Cancel or stop glyph painted at the end of the capsule, and the room it needs. */
 const ACTION_SIZE = 16
-const ACTION_GAP = 8
 /** Clicks this close to the end of the capsule run the action instead of the toggle. */
 const ACTION_ZONE = 32
+const FRAME_MS = 110
 
 const maskUrl = (body: string) =>
   `url("data:image/svg+xml,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none">${body}</svg>`,
   )}")`
 
-/** Drops the dictation in progress: the recording or the transcription. */
+const MASK_PROPS = `-webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;`
+
+/** The microphone the app's catalog does not ship. */
+const MIC_MASK = maskUrl(
+  `<g stroke="#fff" stroke-width="1.3" stroke-linecap="round" fill="none">
+    <path d="M8 1.6a2.3 2.3 0 0 0-2.3 2.3v4.2a2.3 2.3 0 0 0 4.6 0V3.9A2.3 2.3 0 0 0 8 1.6z"/>
+    <path d="M12.6 7.4v.8a4.6 4.6 0 0 1-9.2 0v-.8"/>
+    <path d="M8 12.9v2"/>
+  </g>`,
+)
+
+/** Drops the turn in progress: the recording, the transcription or the whole mode. */
 const CANCEL_MASK = maskUrl(
   `<path d="M4.6 4.6 11.4 11.4M11.4 4.6 4.6 11.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>`,
 )
@@ -43,12 +52,21 @@ const CANCEL_MASK = maskUrl(
 /** Stops the reply being read aloud. */
 const STOP_MASK = maskUrl(`<rect x="4" y="4" width="8" height="8" rx="1.8" fill="#fff"/>`)
 
-/**
- * The host sizes a composer pill for an icon plus a label: it keeps the label's gap
- * and padding even when the text is empty, which leaves a lone icon wide and off
- * centre. These square up pills that carry no label, and anchor the action glyph of the
- * pills this plugin paints.
- */
+/** Bouncing bars for the icon while a transcription runs. */
+function workingMask(step: number): string {
+  const bars = [0.6, 1, 0.75, 0.95, 0.65, 0.85]
+    .map((base, index) => {
+      const pulse = 0.45 + 0.55 * Math.abs(Math.sin(step * 0.85 + index * 1.7))
+      const half = Math.max(1.2, 5.4 * base * pulse)
+      const x = (2.6 + index * 2.2).toFixed(1)
+      return `<path d="M${x} ${(8 - half).toFixed(1)}V${(8 + half).toFixed(1)}"/>`
+    })
+    .join("")
+
+  return maskUrl(`<g stroke="#fff" stroke-width="1.3" stroke-linecap="round">${bars}</g>`)
+}
+
+/** Pills that carry no label: other plugins' pills still need their icon squared up. */
 const BASE_RULES = `
 [data-slot=session-plugin-pill]:has(> span:empty):not([aria-label$="${MARK}"]) {
   width: 28px;
@@ -56,39 +74,77 @@ const BASE_RULES = `
   padding-inline: 0;
   gap: 0;
   justify-content: center;
+}`
+
+function iconBox(left: string, transform: string): string {
+  return `left: ${left};
+  top: 50%;
+  width: ${ICON_SIZE}px;
+  height: ${ICON_SIZE}px;
+  transform: ${transform};
+  background-color: var(--icon-color, currentColor);
+  -webkit-mask-image: var(--icon-mask);
+  mask-image: var(--icon-mask);
+  ${MASK_PROPS}`
 }
-[data-slot=session-plugin-pill][aria-label$="${MARK}"] {
+
+/** A lone microphone with no wave and no action: the plain pill. */
+function compactRule(): string {
+  return `[data-slot=session-plugin-pill][aria-label$="${MARK}"] {
   position: relative;
-}`
-
-/**
- * The host gives a composer pill nothing but an icon and a text label, so the wave and
- * the action glyph are painted by CSS inside that capsule: the label becomes the wave
- * and the button's own pseudo-element becomes the cancel or stop button.
- */
-function paintedRule(wave: string, action: string): string {
-  const label = wave
-    ? `[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
-  width: ${WAVE_WIDTH}px;
-  height: ${WAVE_HEIGHT}px;
-  margin-inline-end: ${ACTION_SIZE + ACTION_GAP}px;
-  background-color: currentColor;
-  -webkit-mask-image: ${wave};
-  mask-image: ${wave};
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
-}`
-    : `[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
-  width: 0;
-  margin-inline-end: ${ACTION_SIZE + ACTION_GAP}px;
-}`
-
-  const button = `[data-slot=session-plugin-pill][aria-label$="${MARK}"]::before {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  gap: 0;
+  justify-content: center;
+  --icon-mask: ${MIC_MASK};
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > svg,
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
+  display: none;
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"]::after {
   content: "";
   position: absolute;
-  right: 10px;
+  ${iconBox("50%", "translate(-50%, -50%)")}
+}`
+}
+
+/**
+ * The capsule that carries the live wave, the icon and an action glyph. The host only
+ * renders an icon and a text label, so the icon and the action are painted by CSS and
+ * the label becomes the wave.
+ */
+function activeRule(icon: string, iconColor: string, wave: string, action: string): string {
+  return `[data-slot=session-plugin-pill][aria-label$="${MARK}"] {
+  position: relative;
+  padding-inline: ${SIDE}px;
+  gap: 0;
+  --icon-mask: ${icon};
+  --icon-color: ${iconColor};
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > svg {
+  display: none;
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
+  width: ${wave ? WAVE_WIDTH : 0}px;
+  height: ${WAVE_HEIGHT}px;
+  margin-inline-start: ${ICON_SIZE + ICON_GAP}px;
+  margin-inline-end: ${ACTION_SIZE + ICON_GAP}px;
+  background-color: currentColor;
+  -webkit-mask-image: ${wave || "none"};
+  mask-image: ${wave || "none"};
+  ${MASK_PROPS}
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"]::after {
+  content: "";
+  position: absolute;
+  ${iconBox(`${SIDE}px`, "translateY(-50%)")}
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"]::before {
+  content: "";
+  position: absolute;
+  right: ${SIDE}px;
   top: 50%;
   width: ${ACTION_SIZE}px;
   height: ${ACTION_SIZE}px;
@@ -96,20 +152,14 @@ function paintedRule(wave: string, action: string): string {
   background-color: var(--color-v2-state-fg-danger, currentColor);
   -webkit-mask-image: ${action};
   mask-image: ${action};
-  -webkit-mask-size: 100% 100%;
-  mask-size: 100% 100%;
-  -webkit-mask-repeat: no-repeat;
-  mask-repeat: no-repeat;
+  ${MASK_PROPS}
 }`
-
-  return `${label}\n${button}`
 }
 
 /**
- * A compact microphone next to the composer. It only appears when dictation is usable
- * and enabled for the chat, and clicking it starts or stops recording. While recording,
- * the capsule grows to show the live wave and a cancel glyph; while a reply is being
- * read, the same capsule shows the stop glyph.
+ * A microphone next to the composer. It appears when dictation is usable, starts and
+ * stops recording, shows the live wave and carries the cancel or stop glyph. In
+ * conversation mode it stays open between turns and the cancel glyph ends the mode.
  */
 export function registerPill(
   ctx: Ctx,
@@ -117,26 +167,55 @@ export function registerPill(
   status: VoiceStatus,
   speech: Speech,
   stop: () => void,
+  conversation: Conversation,
 ) {
+  const [frame, setFrame] = createSignal(0)
+
+  createEffect(() => {
+    if (!dictation.working()) return
+
+    const timer = setInterval(() => setFrame((value) => value + 1), FRAME_MS)
+    onCleanup(() => clearInterval(timer))
+  })
+
   // Reruns with every captured level, so the mask follows the microphone.
   ctx.add(Style, () => {
     const recording = dictation.recording()
     const working = dictation.working()
-    const speaking = speech.speaking() && !recording && !working
-    if (!recording && !working && !speaking) return BASE_RULES
+    const talking = conversation.active()
+    const speaking = speech.speaking() && !recording && !working && !talking
 
-    const wave = recording ? waveMask(dictation.levels()) : ""
-    return `${BASE_RULES}\n${paintedRule(wave, speaking ? STOP_MASK : CANCEL_MASK)}`
+    if (!recording && !working && !talking && !speaking) return `${BASE_RULES}\n${compactRule()}`
+
+    const levels = dictation.levels()
+    // A conversation keeps the microphone open for minutes: only paint the wave when
+    // there was voice in the last second, and never while the reply's own audio plays.
+    const audible = levels.slice(-12).some((level) => level > 0.15)
+    const wave = recording && (!talking || (audible && !speech.speaking())) ? waveMask(levels) : ""
+    const icon = working ? workingMask(frame()) : MIC_MASK
+    const iconColor = working
+      ? "var(--color-v2-state-fg-warning, currentColor)"
+      : "currentColor"
+    const action = speaking ? STOP_MASK : CANCEL_MASK
+
+    return `${BASE_RULES}\n${activeRule(icon, iconColor, wave, action)}`
   })
 
+  /** Whether the end of the capsule currently has something to do. */
+  const hasAction = () =>
+    conversation.active() || dictation.active() || speech.speaking()
+
   const action = () => {
-    if (dictation.recording() || dictation.working()) dictation.cancel()
+    if (conversation.active()) conversation.stop()
+    else if (dictation.recording() || dictation.working()) dictation.cancel()
     else if (speech.speaking()) stop()
   }
 
   // The action glyph shares the capsule with the toggle, so it needs its own click zone:
   // capture runs before the button's handler and stops it for the glyph's end of the pill.
   const onClick = (event: MouseEvent) => {
+    if (!hasAction()) return
+
     const target = event.target as Element | null
     const pill = target?.closest?.(`[data-slot=session-plugin-pill][aria-label$="${MARK}"]`)
     if (!pill) return
@@ -150,15 +229,6 @@ export function registerPill(
   document.addEventListener("click", onClick, true)
   onCleanup(() => document.removeEventListener("click", onClick, true))
 
-  const [frame, setFrame] = createSignal(0)
-
-  createEffect(() => {
-    if (!dictation.working()) return
-
-    const timer = setInterval(() => setFrame((value) => (value + 1) % WORKING_ICONS.length), FRAME_MS)
-    onCleanup(() => clearInterval(timer))
-  })
-
   ctx.add(ComposerPill, {
     id: "voice",
     order: 90,
@@ -168,19 +238,21 @@ export function registerPill(
 
       const recording = dictation.recording()
       const working = dictation.working()
-      const speaking = speech.speaking() && !recording && !working
+      const talking = conversation.active()
+      const speaking = speech.speaking() && !recording && !working && !talking
 
       return {
-        icon: working ? WORKING_ICONS[frame()] : "outline-audio",
-        tone: recording ? "danger" : working ? "warning" : undefined,
+        icon: "outline-audio",
         label: "",
-        title: working
-          ? `${ctx.t("pill.working")}${MARK}`
-          : recording
-            ? `${ctx.t("pill.recording")}${MARK}`
-            : speaking
-              ? `${ctx.t("pill.dictate")}${MARK}`
-              : ctx.t("pill.dictate"),
+        title: `${
+          working
+            ? ctx.t("pill.working")
+            : recording
+              ? ctx.t("pill.recording")
+              : talking
+                ? ctx.t("pill.conversation")
+                : ctx.t("pill.dictate")
+        }${MARK}`,
         run: () => void dictation.toggle(),
       }
     },

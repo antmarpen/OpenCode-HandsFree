@@ -1,19 +1,23 @@
 import { onCleanup } from "solid-js"
+import type { Conversation } from "./conversation"
 import type { Dictation } from "./dictation"
 
 /**
- * Escape cancels the dictation instead of interrupting the session, but only while
- * there is something to cancel. The listener runs in the capture phase on the window,
- * before the composer's own key handler, and stops the event from reaching it, so a
- * second Escape (once the dictation is gone) interrupts the session as usual.
+ * Escape cancels the dictation, or ends conversation mode, instead of interrupting the
+ * session. The listener runs in the capture phase on the window, before the composer's
+ * own key handler, and stops the event from reaching it, so a second Escape (once there
+ * is nothing to cancel) interrupts the session as usual.
  */
-export function registerEscape(dictation: Dictation) {
+export function registerEscape(dictation: Dictation, conversation: Conversation) {
   const onKeyDown = (event: KeyboardEvent) => {
-    if (event.key !== "Escape" || !dictation.active()) return
+    if (event.key !== "Escape") return
+    if (!conversation.active() && !dictation.active()) return
 
     event.preventDefault()
     event.stopImmediatePropagation()
-    dictation.cancel()
+
+    if (conversation.active()) conversation.stop()
+    else dictation.cancel()
   }
 
   window.addEventListener("keydown", onKeyDown, true)

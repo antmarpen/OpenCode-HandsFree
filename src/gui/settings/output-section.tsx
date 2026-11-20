@@ -37,7 +37,7 @@ export function OutputSection(props: { readonly secrets: SecretState }) {
   }
 
   return (
-    <ctx.ui.SettingsSection title={ctx.t("settings.section.output")}>
+    <ctx.ui.SettingsSection>
       <EngineRow
         id="voice-engine-output"
         title={ctx.t("settings.engine")}

@@ -70,9 +70,11 @@ src/gui/audio/meter.ts        Pure RMS mapping, level smoothing and the wave mas
 src/gui/audio/devices.ts      Microphone enumeration for the input device picker.
 src/gui/recorder.ts           Microphone capture built on the audio helpers.
 src/gui/window.tsx            Thin composition of the window modules.
-src/gui/window/               Dictation, delivery, speech, player, replies, commands, pill, Escape, stop pill, header control, header icons, switch popover, settings page.
-src/gui/settings.tsx          Settings page composition.
+src/gui/window/               Dictation, conversation, delivery, speech, player, replies, commands, pill, Escape, stop pill, header control, header icons, switch popover, settings page.
+src/gui/settings.tsx          Settings page composition, with the tab switch.
 src/gui/settings-route.ts     Settings tab id shared by the header and the page.
+src/gui/settings/tabs.tsx     Pill tabs at the top of the settings page.
+src/gui/settings/conversation-section.tsx  Experimental conversation settings.
 src/gui/settings/rows.tsx     Reusable settings row components.
 src/gui/settings/provider-row.tsx    OpenCode provider selector.
 src/gui/settings/providers.ts        Providers OpenCode has connected, with their base URLs.
