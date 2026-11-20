@@ -45,3 +45,24 @@ export function ReadAloudIcon() {
     </svg>
   )
 }
+
+/** Two speech bubbles: the hands-free conversation loop. */
+export function ConversationIcon() {
+  return (
+    <svg
+      data-slot="icon-svg"
+      width="14"
+      height="14"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.7"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M3 4h12.5a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-4 3v-3H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" />
+      <path d="M18 8.2h2.2a1.8 1.8 0 0 1 1.8 1.8v3.8a1.8 1.8 0 0 1-1.8 1.8h-1v2.4l-2.9-2.4" />
+    </svg>
+  )
+}

@@ -5,7 +5,7 @@ import type { definition } from "../definition"
 import { readFlags, setFlag } from "../flags"
 import { SETTINGS_PAGE } from "../settings-route"
 import type { VoiceStatus } from "../status"
-import { MicIcon, ReadAloudIcon } from "./icons"
+import { ConversationIcon, MicIcon, ReadAloudIcon } from "./icons"
 
 const WIDTH = 280
 const GAP = 6
@@ -167,7 +167,7 @@ function VoicePopover(props: {
         onChange={(value) => setFlag(ctx, props.session, "output", value)}
       />
       <SwitchLine
-        icon={<ctx.ui.Icon name="outline-rotate-clockwise" size="small" />}
+        icon={<ConversationIcon />}
         label={ctx.t("pill.conversation")}
         checked={flags().conversation}
         disabled={!props.status.inputReady() || !props.status.outputReady()}
