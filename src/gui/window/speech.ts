@@ -12,10 +12,6 @@ export interface Speech {
   readonly speak: Speak
   /** True while a reply is being synthesized or played, for the stop pill. */
   readonly speaking: () => boolean
-  /** Silences the chunk in flight without dropping it: the microphone hears only the user. */
-  hold(): void
-  /** Resumes a held reply, when the sound turned out to be a cough. */
-  release(): void
   cancel(): void
 }
 
@@ -108,7 +104,7 @@ export function createSpeech(ctx: Ctx): Speech {
     setSpeaking(false)
   }
 
-  return { speak, speaking, hold: player.pause, release: player.resume, cancel }
+  return { speak, speaking, cancel }
 }
 
 let shared: Speech | undefined

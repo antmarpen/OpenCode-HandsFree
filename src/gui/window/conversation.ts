@@ -224,19 +224,15 @@ export function createConversation(
 
       if (voiced) {
         if (!voiceSince) {
-          // The first sound of the turn: hush the reply at once, because its own audio
-          // would otherwise cover the first words in the recording, and keep the syllable
-          // that woke the detector.
+          // The first sound of the turn starts the recording exactly as it would with no
+          // reply playing; only the playback has to wait for confirmation.
           voiceSince = now
-          speech.hold()
           dictation.trim(BARGE_ONSET_S)
         }
         voiceEnd = now
       } else if (voiceSince && now - voiceEnd > BARGE_GAP_MS) {
-        // A burst that stopped: a cough, not a turn. Let the reply go on from where it
-        // was and go back to holding, ready for the next sound.
+        // A burst that stopped: a cough, not a turn. Back to holding, ready for the next.
         voiceSince = 0
-        speech.release()
         dictation.reset()
       }
 
