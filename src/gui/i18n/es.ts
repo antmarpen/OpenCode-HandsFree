@@ -127,6 +127,7 @@ export const es: Record<keyof typeof en, string> = {
   "status.missingLocal.description": "Indica el binario de whisper.cpp y la ruta del modelo en Ajustes > Voz.",
   "status.micDenied": "No se puede usar el micrófono",
   "status.transcribeFailed": "Error al transcribir",
+  "status.sendFailed": "No se pudo enviar el mensaje",
   "status.speakFailed": "No se pudo reproducir la respuesta",
   "status.inputOn": "Dictado activado en este chat",
   "status.inputOff": "Dictado desactivado en este chat",

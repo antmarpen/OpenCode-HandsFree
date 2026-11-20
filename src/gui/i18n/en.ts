@@ -125,6 +125,7 @@ export const en = {
   "status.missingLocal.description": "Set the whisper.cpp binary and model path in Settings > Voice.",
   "status.micDenied": "Cannot use the microphone",
   "status.transcribeFailed": "Transcription failed",
+  "status.sendFailed": "Could not send the message",
   "status.speakFailed": "Could not play the reply",
   "status.inputOn": "Dictation on for this chat",
   "status.inputOff": "Dictation off for this chat",

@@ -160,7 +160,11 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
         return
       }
       if (session) {
-        await deliver(session, text, { send: readFlags(ctx, session).conversation })
+        // Sending must not hold the microphone: the prompt call can wait for the agent's
+        // whole turn, and conversation mode has to listen again as soon as it is sent.
+        void deliver(session, text, { send: readFlags(ctx, session).conversation }).catch((error) =>
+          notifyError(ctx.t("status.sendFailed"), String(error)),
+        )
       }
     } catch (error) {
       if (!controller.signal.aborted) {

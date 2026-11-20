@@ -59,10 +59,6 @@ export function createConversation(
   let wasPlaying = false
   /** When the reply being read started playing, so its own onset is not a barge. */
   let playSince = 0
-  /** Microphone peak while a reply plays, for tuning the barge threshold. */
-  let playPeak = 0
-  /** Milliseconds the microphone spent over the barge threshold during that reply. */
-  let aboveMs = 0
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -193,29 +189,11 @@ export function createConversation(
     const playing = speech.speaking()
 
     // A reply leaves its own audio in the pre-roll; drop it as soon as the audio ends.
-    if (wasPlaying && !playing) {
-      dictation.reset()
-      if (playPeak > 0) {
-        console.info("voice: reply mic", {
-          peak: Number(playPeak.toFixed(2)),
-          above: aboveMs,
-          bargeLevel: BARGE_LEVEL,
-        })
-      }
-    }
-    if (playing && !wasPlaying) {
-      playSince = now
-      playPeak = 0
-      aboveMs = 0
-    }
+    if (wasPlaying && !playing) dictation.reset()
+    if (playing && !wasPlaying) playSince = now
     wasPlaying = playing
 
     const level = dictation.levels().at(-1) ?? 0
-
-    if (playing) {
-      playPeak = Math.max(playPeak, level)
-      if (level >= BARGE_LEVEL) aboveMs += TICK_MS
-    }
 
     if (level >= (playing ? BARGE_LEVEL : VOICE_LEVEL)) {
       if (playing) {
@@ -225,7 +203,7 @@ export function createConversation(
           if (now - bargeSince >= BARGE_MS) {
             // Talking over the reply cuts it and starts the turn from this point. The
             // silence that follows sends it, without waiting for the reply to finish.
-            console.info("voice: barge", { level: Number(level.toFixed(2)) })
+            console.warn("voice: barge", { level: Number(level.toFixed(2)) })
             speech.cancel()
             void ctx.main(Voice).stop().catch(() => {})
             dictation.reset()
