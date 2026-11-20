@@ -117,7 +117,7 @@ export function SearchSelect(props: {
       type="button"
       aria-haspopup="dialog"
       onClick={open}
-      class="opencode-voice-trigger"
+      class="opencode-handsfree-trigger"
       style={triggerStyle()}
     >
       <span style={{ overflow: "hidden", "text-overflow": "ellipsis", "white-space": "nowrap" }}>
@@ -177,7 +177,7 @@ function Picker(props: {
                 onInput={setQuery}
                 onSubmit={pickFirst}
                 autofocus
-                class="opencode-voice-search"
+                class="opencode-handsfree-search"
               />
             </Show>
           </div>

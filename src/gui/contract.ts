@@ -14,7 +14,7 @@ export type VoiceSlot = "transcribe" | "speak"
  * and base64 WAV, so every window shares one player and one key store.
  */
 export const Voice = Ipc.define({
-  id: "opencode-voice.engine",
+  id: "opencode-handsfree.engine",
   methods: {
     transcribe: {
       input: Schema.Struct({

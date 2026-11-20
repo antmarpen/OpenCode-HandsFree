@@ -3,7 +3,7 @@ import type { en } from "./en"
 export const es: Record<keyof typeof en, string> = {
   "settings.title": "Voz",
   "settings.description":
-    "Dicta prompts con Whisper o un proveedor compatible con OpenAI, y deja que el agente lea sus respuestas en voz alta.",
+    "Dicta prompts con un modelo local de voz a texto o un proveedor compatible con OpenAI, y deja que el agente lea sus respuestas en voz alta.",
   "settings.section.input": "Entrada: voz a texto",
   "settings.section.output": "Salida: texto a voz",
   "settings.section.conversation": "Conversación",
@@ -16,11 +16,11 @@ export const es: Record<keyof typeof en, string> = {
   "settings.tab.output": "Salida",
   "settings.tab.experimental": "Experimental",
   "settings.engine": "Motor",
-  "settings.engine.local": "Local (whisper.cpp / voz del sistema)",
+  "settings.engine.local": "Local (voz a texto / voz del sistema)",
   "settings.engine.cloud": "Nube (compatible con OpenAI)",
-  "settings.binary": "Binario de whisper.cpp",
+  "settings.binary": "Binario de voz a texto",
   "settings.binary.description":
-    "Ruta o nombre del ejecutable de whisper.cpp (whisper-cli, main.exe, ...). Debe aceptar -m, -f, -otxt y -of.",
+    "Ruta o nombre del ejecutable de voz a texto (compatible con whisper.cpp: whisper-cli, main.exe, ...). Debe aceptar -m, -f, -otxt y -of.",
   "settings.model": "Modelo",
   "settings.model.description": "Ruta al modelo ggml/gguf en local, o el id del modelo del proveedor.",
   "settings.language": "Idioma",
@@ -29,7 +29,7 @@ export const es: Record<keyof typeof en, string> = {
   "settings.url.description":
     "Raíz del proveedor sin /audio/transcriptions ni /audio/speech, por ejemplo https://api.openai.com/v1.",
   "settings.apiKey": "Clave de API",
-  "settings.apiKey.description": "Se guarda cifrada con el llavero del sistema operativo.",
+  "settings.apiKey.description": "Se guarda cifrada con el llavero del sistema operativo cuando está disponible.",
   "settings.save": "Guardar",
   "settings.saved": "Guardado",
   "settings.saveFailed": "No se pudo guardar",
@@ -125,7 +125,7 @@ export const es: Record<keyof typeof en, string> = {
   "status.copied": "Transcripción copiada",
   "status.copied.description": "El chat cambió mientras grababas, así que el texto está en el portapapeles.",
   "status.missingLocal": "El dictado local no está configurado",
-  "status.missingLocal.description": "Indica el binario de whisper.cpp y la ruta del modelo en Ajustes > Voz.",
+  "status.missingLocal.description": "Indica el binario local de voz a texto y la ruta del modelo en Ajustes > Voz.",
   "status.micDenied": "No se puede usar el micrófono",
   "status.transcribeFailed": "Error al transcribir",
   "status.sendFailed": "No se pudo enviar el mensaje",

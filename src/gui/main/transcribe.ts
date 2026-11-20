@@ -1,6 +1,7 @@
-import { errorMessage } from "./errors"
+import { errorForLog } from "./errors"
 import type { Credentials } from "./credentials"
 import type { Log } from "./log"
+import { safeURL } from "./urls"
 import { transcribeCloud } from "./transcribe-cloud"
 import { transcribeLocal } from "./transcribe-local"
 
@@ -45,7 +46,7 @@ export function createTranscriber(credentials: Credentials, log: Log): Transcrib
         const url = resolved.baseURL || input.cloud.url
         log.write("info", "voice: transcribing", {
           provider: input.providerID ?? "manual",
-          url,
+          url: safeURL(url),
         })
 
         text = await transcribeCloud(
@@ -66,7 +67,7 @@ export function createTranscriber(credentials: Credentials, log: Log): Transcrib
         log.write("error", "voice: transcription failed", {
           engine: input.engine,
           provider: input.providerID ?? "manual",
-          error: errorMessage(error),
+          error: errorForLog(error),
         })
       }
       throw error

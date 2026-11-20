@@ -7,9 +7,9 @@
 
 ## What this project is
 
-`opencode-voice` is an OpenCode Desktop plugin that adds bidirectional voice:
+`opencode-handsfree` is an OpenCode Desktop plugin that adds bidirectional voice:
 
-- dictation: microphone -> Whisper (local or cloud) -> composer;
+- dictation: microphone -> speech-to-text model (local or cloud) -> composer;
 - playback: assistant text -> TTS (local or cloud) -> speakers;
 - per-session switches, persisted through the plugin stores;
 - a settings page under Settings > Voice.

@@ -1,7 +1,7 @@
 export const en = {
   "settings.title": "Voice",
   "settings.description":
-    "Dictate prompts with Whisper or an OpenAI-compatible provider, and let the agent read its replies aloud.",
+    "Dictate prompts with a local speech-to-text model or an OpenAI-compatible provider, and let the agent read its replies aloud.",
   "settings.section.input": "Input: voice to text",
   "settings.section.output": "Output: text to voice",
   "settings.section.conversation": "Conversation",
@@ -14,11 +14,11 @@ export const en = {
   "settings.tab.output": "Output",
   "settings.tab.experimental": "Experimental",
   "settings.engine": "Engine",
-  "settings.engine.local": "Local (whisper.cpp / system voice)",
+  "settings.engine.local": "Local (speech-to-text / system voice)",
   "settings.engine.cloud": "Cloud (OpenAI-compatible)",
-  "settings.binary": "whisper.cpp binary",
+  "settings.binary": "Speech-to-text binary",
   "settings.binary.description":
-    "Path or command name of the whisper.cpp executable (whisper-cli, main.exe, ...). It must support -m, -f, -otxt and -of.",
+    "Path or command name of the speech-to-text executable (whisper.cpp compatible: whisper-cli, main.exe, ...). It must support -m, -f, -otxt and -of.",
   "settings.model": "Model",
   "settings.model.description": "Path to the ggml/gguf model for local, or the model id for the provider.",
   "settings.language": "Language",
@@ -27,7 +27,7 @@ export const en = {
   "settings.url.description":
     "Provider root without /audio/transcriptions or /audio/speech, e.g. https://api.openai.com/v1.",
   "settings.apiKey": "API key",
-  "settings.apiKey.description": "Stored encrypted with the operating system's keychain.",
+  "settings.apiKey.description": "Stored encrypted with the operating system's keychain when available.",
   "settings.save": "Save",
   "settings.saved": "Saved",
   "settings.saveFailed": "Could not save",
@@ -123,7 +123,7 @@ export const en = {
   "status.copied": "Transcript copied",
   "status.copied.description": "The chat changed while recording, so the text is in your clipboard.",
   "status.missingLocal": "Local dictation is not configured",
-  "status.missingLocal.description": "Set the whisper.cpp binary and model path in Settings > Voice.",
+  "status.missingLocal.description": "Set the local speech-to-text binary and model path in Settings > Voice.",
   "status.micDenied": "Cannot use the microphone",
   "status.transcribeFailed": "Transcription failed",
   "status.sendFailed": "Could not send the message",

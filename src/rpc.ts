@@ -12,7 +12,7 @@ const ProviderError = {
  * its base URL and the credential of its active connection.
  */
 export const VoiceCredentials = Rpc.define({
-  id: "opencode-voice.credentials",
+  id: "opencode-handsfree.credentials",
   methods: {
     credential: {
       input: {

@@ -1,9 +1,10 @@
-import { errorMessage } from "./errors"
+import { errorForLog } from "./errors"
 import type { Credentials } from "./credentials"
 import type { Log } from "./log"
 import type { Runner } from "./runner"
 import { speakCloud } from "./speech-cloud"
 import { speakLocal } from "./speech-local"
+import { safeURL } from "./urls"
 
 export interface SpeechRequest {
   readonly text: string
@@ -27,7 +28,7 @@ export interface Spoken {
   readonly mime: string
 }
 
-export type Speaker = (input: SpeechRequest) => Promise<Spoken>
+export type Speaker = (input: SpeechRequest, signal?: AbortSignal) => Promise<Spoken>
 
 const SILENT: Spoken = { audio: "", mime: "" }
 
@@ -55,7 +56,7 @@ export function createSpeaker(credentials: Credentials, runner: Runner, log: Log
     return true
   }
 
-  return async (input) => {
+  return async (input, signal) => {
     if (!input.text.trim()) return SILENT
     if (!remember(input.id)) return SILENT
 
@@ -72,7 +73,7 @@ export function createSpeaker(credentials: Credentials, runner: Runner, log: Log
       if (!resolved.key) throw new Error("The selected provider has no usable credential")
 
       const url = resolved.baseURL || input.cloud.url
-      log.write("info", "voice: speaking", { provider: input.providerID ?? "manual", url })
+      log.write("info", "voice: speaking", { provider: input.providerID ?? "manual", url: safeURL(url) })
 
       const spoken = await speakCloud(
         {
@@ -83,6 +84,7 @@ export function createSpeaker(credentials: Credentials, runner: Runner, log: Log
           format: input.cloud.format,
         },
         resolved.key,
+        signal,
       )
 
       return { audio: Buffer.from(spoken.bytes).toString("base64"), mime: spoken.mime }
@@ -90,7 +92,7 @@ export function createSpeaker(credentials: Credentials, runner: Runner, log: Log
       log.write("error", "voice: speech failed", {
         engine: input.engine,
         provider: input.providerID ?? "manual",
-        error: errorMessage(error),
+        error: errorForLog(error),
       })
       throw error
     }

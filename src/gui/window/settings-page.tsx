@@ -9,10 +9,10 @@ import { VoiceSettings } from "../settings"
  * theme, with a neutral fallback when a token is missing.
  */
 const SETTINGS_STYLE = `
-.opencode-voice-search, .opencode-voice-search input { width: 100%; box-sizing: border-box; }
-.opencode-voice-trigger { background: transparent; border-radius: 4px; }
-.opencode-voice-trigger:hover { background: rgba(128, 128, 128, 0.12); }
-.opencode-voice-tabs {
+.opencode-handsfree-search, .opencode-handsfree-search input { width: 100%; box-sizing: border-box; }
+.opencode-handsfree-trigger { background: transparent; border-radius: 4px; }
+.opencode-handsfree-trigger:hover { background: rgba(128, 128, 128, 0.12); }
+.opencode-handsfree-tabs {
   display: flex;
   align-items: center;
   gap: 6px;
@@ -21,7 +21,7 @@ const SETTINGS_STYLE = `
   position: relative;
   margin-top: 4px;
 }
-.opencode-voice-tabs::before {
+.opencode-handsfree-tabs::before {
   content: "";
   position: absolute;
   inset-inline-start: -8px;
@@ -30,7 +30,7 @@ const SETTINGS_STYLE = `
   height: 1px;
   background: var(--v2-border-border-base, rgba(128, 128, 128, 0.25));
 }
-.opencode-voice-tab {
+.opencode-handsfree-tab {
   height: 24px;
   padding: 0 8px;
   border-radius: 4px;
@@ -41,26 +41,26 @@ const SETTINGS_STYLE = `
   font-size: 12px;
   cursor: pointer;
 }
-.opencode-voice-tab:hover {
+.opencode-handsfree-tab:hover {
   background: var(--v2-background-bg-layer-03, rgba(128, 128, 128, 0.12));
   color: var(--v2-text-text-base, inherit);
 }
-.opencode-voice-tab[aria-selected="true"] {
+.opencode-handsfree-tab[aria-selected="true"] {
   background: var(--v2-background-bg-layer-03, rgba(128, 128, 128, 0.12));
   border-color: var(--v2-border-border-muted, rgba(128, 128, 128, 0.35));
   color: var(--v2-text-text-base, inherit);
 }
-.opencode-voice-tab:focus-visible {
+.opencode-handsfree-tab:focus-visible {
   outline: 2px solid var(--v2-border-border-focus, #4b8bf5);
   outline-offset: 1px;
 }
-.opencode-voice-hint {
+.opencode-handsfree-hint {
   margin: 8px 2px 0;
   font-size: 11.5px;
   line-height: 1.4;
   color: var(--v2-text-text-muted, inherit);
 }
-.opencode-voice-panel {
+.opencode-handsfree-panel {
   display: flex;
   flex-direction: column;
   gap: 32px;
@@ -83,7 +83,7 @@ export function registerSettingsPage(ctx: Ctx) {
           id: "voice-engine-input",
           title: ctx.t("settings.engine"),
           description: ctx.t("settings.section.input"),
-          keywords: "voice dictation whisper microphone dictado voz",
+          keywords: "voice dictation stt microphone dictado voz",
         },
         {
           id: "voice-engine-output",

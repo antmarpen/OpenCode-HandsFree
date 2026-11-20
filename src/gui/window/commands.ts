@@ -29,7 +29,7 @@ export function registerCommands(
     id: "dictate",
     title: dictation.recording() ? ctx.t("command.stop") : ctx.t("command.dictate"),
     description: ctx.t("command.dictate.description"),
-    keywords: "voice audio whisper speech microphone dictado voz microfono",
+    keywords: "voice audio stt speech microphone dictado voz microfono",
     section: "prompt",
     bind: "mod+shift+space",
     slash: { name: "dictate" },

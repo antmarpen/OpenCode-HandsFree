@@ -95,8 +95,8 @@ export const definition = Plugin.define({
         format: "wav",
         provider: "",
       },
-    }),
-    voice: Store.session(SessionVoice, {}),
+    }, "plugin.opencode-voice.settings"),
+    voice: Store.session(SessionVoice, {}, "plugin.opencode-voice.voice"),
   },
   i18n: { en, es },
 })

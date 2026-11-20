@@ -7,7 +7,7 @@ import { VoiceCredentials } from "./rpc"
  * from its settings and the credential of its active connection.
  */
 export default Plugin.define({
-  id: "opencode-voice",
+  id: "opencode-handsfree",
   async setup(ctx) {
     await ctx.rpc.register(VoiceCredentials, {
       credential: async (input, call) => {

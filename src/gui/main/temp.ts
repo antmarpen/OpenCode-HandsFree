@@ -6,7 +6,7 @@ import path from "node:path"
  * Resolved lazily: this module is also evaluated in the window, where `os` and `path`
  * are inert placeholders and must not be called at module scope.
  */
-const root = () => path.join(os.tmpdir(), "opencode-voice")
+const root = () => path.join(os.tmpdir(), "opencode-handsfree")
 
 export async function createTempFile(name: string, data: Uint8Array | string): Promise<string> {
   await fs.mkdir(root(), { recursive: true })

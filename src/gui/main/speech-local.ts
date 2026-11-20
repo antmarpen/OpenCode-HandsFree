@@ -74,7 +74,7 @@ function synthesize(input: LocalSpeech, runner: Runner, file: string): Promise<b
     ])
   }
 
-  return runner.run("espeak-ng", [...voiceArgs(input.voice), "-s", rate, "-w", file, input.text])
+  return runner.run("espeak-ng", [...voiceArgs(input.voice), "-s", rate, "-w", file, "--", input.text])
 }
 
 /**

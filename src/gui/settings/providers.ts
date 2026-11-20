@@ -23,11 +23,12 @@ export function useCloudProviders(): CloudProvider[] {
 
   return (data.location.provider.list() ?? [])
     .filter((item) => !!item.integrationID && connected.has(item.integrationID))
-    .map((item) => ({
-      id: item.id as string,
-      name: item.name,
-      baseURL: typeof item.settings?.baseURL === "string" ? item.settings.baseURL : undefined,
-    }))
+    .flatMap((item) => {
+      const baseURL = typeof item.settings?.baseURL === "string" ? item.settings.baseURL.trim() : ""
+      // A provider without a URL cannot receive audio, and falling back to the URL field
+      // would send its credential elsewhere; it is not offered.
+      return baseURL ? [{ id: item.id as string, name: item.name, baseURL }] : []
+    })
 }
 
 /**

@@ -10,7 +10,7 @@ export function ConversationSection() {
   return (
     <ctx.ui.SettingsSection
       title={ctx.t("settings.section.conversation")}
-      footer={<p class="opencode-voice-hint">{ctx.t("settings.conversation.hint")}</p>}
+      footer={<p class="opencode-handsfree-hint">{ctx.t("settings.conversation.hint")}</p>}
     >
       <SwitchRow
         id="voice-conversation-default"

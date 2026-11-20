@@ -1,13 +1,14 @@
 import { Plugin } from "@opencode/plugin/gui"
 import { Voice } from "./contract"
 import { createCredentials } from "./main/credentials"
-import { errorMessage } from "./main/errors"
+import { errorForLog } from "./main/errors"
 import { createModelLister } from "./main/models"
 import { createRunner } from "./main/runner"
 import { createSecrets } from "./main/secrets"
 import { createSpeaker } from "./main/speech"
 import { clearTempFiles } from "./main/temp"
 import { createTranscriber } from "./main/transcribe"
+import { safeURL } from "./main/urls"
 import { listVoices } from "./main/voices"
 
 /** Bump when the Ipc surface changes; it is logged so a stale main process is visible. */
@@ -30,15 +31,15 @@ export const main: Plugin.MainSetup = (ctx) => {
 
   ctx.provide(Voice, {
     transcribe: (input, caller) => transcribe(input, caller.signal),
-    speak: (input) => speak(input),
+    speak: (input, caller) => speak(input, caller.signal),
     models: async (input) => {
       try {
         return await models(input)
       } catch (error) {
         ctx.log.write("error", "voice: could not list models", {
-          url: input.url,
+          url: safeURL(input.url),
           provider: input.providerID ?? "manual",
-          error: errorMessage(error),
+          error: errorForLog(error),
         })
         throw error
       }
@@ -47,7 +48,7 @@ export const main: Plugin.MainSetup = (ctx) => {
       try {
         return await listVoices(ctx.log)
       } catch (error) {
-        ctx.log.write("error", "voice: could not list voices", { error: errorMessage(error) })
+        ctx.log.write("error", "voice: could not list voices", { error: errorForLog(error) })
         throw error
       }
     },

@@ -1,126 +1,172 @@
-# opencode-voice
+# opencode-handsfree
 
-Plugin de voz bidireccional para **OpenCode Desktop**:
+Hands-free bidirectional voice for **OpenCode Desktop**.
 
-- **Dictado**: graba el micrófono, transcribe con whisper.cpp local o con un proveedor compatible con OpenAI (Whisper) y deja el texto en el prompt.
-- **Lectura**: al terminar cada bloque de texto del agente, lo lee en voz alta con la voz del sistema (SAPI en Windows) o con un TTS en la nube.
-- **Conversación (experimental)**: escucha sola, cierra el turno al detectar silencio, envía el mensaje y lee la respuesta, y vuelve a escuchar. Al activar el modo, la píldora del compositor cambia al icono de conversación; **al pulsarla empieza el ciclo** y, mientras dura, sigue con ese icono. Si hablas mientras se lee la respuesta, la lectura se corta y tu turno se envía en cuanto callas. Con una respuesta sonando, el extremo de la píldora muestra el stop y solo calla la voz; la ✕ (o Escape, o volver a pulsar la píldora) detiene el ciclo y deja el modo listo para volver a empezar.
-- **Por chat**: cada sesión tiene su propio interruptor de entrada y salida, persistente. Los chats nuevos heredan el valor por defecto de los ajustes.
-- **Ajustes propios** en **Settings > Voice**, sin tocar `opencode.json` salvo para cargar el plugin.
+[![CI](https://github.com/antmarpen/opencode-handsfree/actions/workflows/ci.yml/badge.svg)](https://github.com/antmarpen/opencode-handsfree/actions)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![OpenCode Desktop](https://img.shields.io/badge/OpenCode-Desktop-blue)](https://opencode.ai)
 
-## Requisitos
+[English](README.md) | [Español](README.es.md)
 
-- OpenCode Desktop (la API GUI es experimental y puede cambiar entre versiones).
-- Node 20+ y npm para compilar.
-- **Entrada local**: [`whisper.cpp`](https://github.com/ggml-org/whisper.cpp) compilado (`whisper-cli.exe`, `main.exe`, …) y un modelo `ggml-*.bin`. El plugin graba WAV 16 kHz mono, así que **no hace falta ffmpeg**.
-- **Salida local**: en Windows usa SAPI (voces instaladas del sistema); en macOS `say`; en Linux `espeak-ng`. Se sintetiza a WAV y lo reproduce la propia ventana.
-- **Nube**: cualquier proveedor compatible con OpenAI en `/audio/transcriptions` y `/audio/speech`.
+## What it does
 
-## Compilar y activar
+- **Dictation**: records the microphone, transcribes it with a local speech-to-text model or an OpenAI-compatible provider, and leaves the text in the composer.
+- **Spoken replies**: reads each assistant text block aloud with the operating system voice or a cloud text-to-speech engine.
+- **Conversation mode (experimental)**: listens on its own, closes the turn when it detects silence, sends the message, reads the reply, and starts listening again.
+- **Per-chat switches** for input and output, persisted per session, plus a settings page under **Settings > Voice**.
+
+## Requirements
+
+- **OpenCode Desktop** with the experimental GUI plugin API. The GUI part is loaded only from the plugin entry in the **global** `opencode.json(c)`.
+- **Platform**: only Windows has been tested at runtime. The macOS and Linux local engine paths exist in the code but have not been verified; CI only checks that the project builds on Linux.
+- **Node.js** `20.19+` or `22.12+` to build (Vite 7).
+- **Local dictation** (optional): a speech-to-text CLI compatible with `whisper.cpp` (`whisper-cli`, `main.exe`, ...) and a `ggml-*.bin` model. The plugin records 16 kHz mono WAV, so no ffmpeg is needed.
+- **Local replies** (optional): SAPI voices on Windows, `say` on macOS, `espeak-ng` on Linux.
+- **Cloud** (optional): any provider that implements the OpenAI `/audio/transcriptions` and `/audio/speech` contract.
+
+## Install and enable
 
 ```powershell
-cd C:\Develop\Proyectos\opencode-voice
-npm install
+git clone https://github.com/antmarpen/opencode-handsfree.git
+cd opencode-handsfree
+npm ci
 npm run build
 ```
 
-Añade el plugin al `opencode.jsonc` **global** (`%USERPROFILE%\.config\opencode\opencode.jsonc`):
+`dist/gui-experimental.cjs` is built locally and is not committed.
+
+Add the absolute path of the repository to the `plugins` array of your **global** `opencode.jsonc` (usually `%USERPROFILE%\.config\opencode\opencode.jsonc` on Windows or `~/.config/opencode/opencode.jsonc` elsewhere):
 
 ```jsonc
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugins": ["C:/path/to/opencode-voice"]
+  "plugins": ["C:/path/to/opencode-handsfree"]
 }
 ```
 
-Reinicia la app o abre una ventana nueva. La parte GUI se carga desde el servidor propio de Desktop.
+Restart OpenCode Desktop. After every rebuild the GUI part reloads in all windows; a new Ipc method needs a full restart.
 
-## Uso
+## Usage
 
-- Atajo **Ctrl/Cmd + Shift + Space** (o `/dictate`): inicia el dictado; vuelve a pulsarlo para parar y transcribir.
-- **Enter con el prompt vacío** hace lo mismo. Si hay texto, Enter envía como siempre.
-- Icono de micrófono junto al compositor: **solo aparece cuando el dictado tiene un proveedor configurado y el interruptor de dictado del chat está activado**. Un clic graba o para. Mientras graba, la misma cápsula muestra la **onda en vivo** (64 barras simétricas) y una **✕** al final que cancela el dictado; al transcribir quedan el icono y la ✕ dentro de la cápsula.
-- **Escape** cancela el dictado mientras graba o transcribe; si no hay dictado activo, sigue interrumpiendo la sesión como siempre.
-- Mientras se lee una respuesta, esa misma cápsula muestra un **stop** para cortar la cola y el audio en curso (si el micrófono no está disponible, el stop aparece como píldora aparte).
-- En la fila del título del chat: el engranaje está **siempre** visible y abre un popover con dos **switches alineados a la derecha** (dictado y lectura) y el acceso a **Settings > Voice**. A su lado, un **micrófono** y un **bocadillo con puntos** (con su estado en color de acento) solo aparecen si su dirección está configurada (el micrófono sigue el mismo criterio que el icono del compositor).
-- El interruptor de dictado del chat es la **puerta única**: con él apagado no aparece el micrófono, Enter y el atajo no dictan, y si se apaga mientras graba o transcribe, se cancela. La lectura funciona igual: con el interruptor apagado no se leen respuestas.
-- Comandos: `/voice on|off`, `/voice input|output`, `/voice settings`, `/dictate`, `/speak` y `/shush`. `/voice` sin argumentos muestra el estado.
-- El atajo se puede cambiar en **Settings > Shortcuts**.
+### Shortcuts and commands
 
-Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo. Activado, se envía en cuanto termina la transcripción.
+| Action | How |
+| --- | --- |
+| Start or stop dictation | `mod+shift+space`, `/dictate`, or the microphone icon |
+| Dictate with an empty prompt | `Enter` |
+| Turn voice on or off for this chat | `/voice on`, `/voice off` |
+| Pick a direction | `/voice input`, `/voice output` |
+| Open the settings page | `/voice settings` |
+| Read or silence replies | `/speak`, `/shush` |
+| Cancel recording or transcription | `Escape` (otherwise it interrupts the session as usual) |
 
-## Configuración
+With `autoSend` off, the transcript is inserted into the composer for review. With it on, the message is sent as soon as the transcription finishes.
 
-**Settings > Voice**:
+### Composer pill
 
-- **Pestañas**: `Entrada`, `Salida` y `Experimental`, para que la página no sea un scroll largo.
-- Motor de entrada y de salida: `Local` o `Nube`.
-- **Micrófono**: se puede elegir el dispositivo de entrada (o dejar el predeterminado del sistema). La lista se carga desde el propio equipo.
-- **Dispositivo de salida**: dónde se reproducen las respuestas; también se puede dejar el predeterminado del sistema.
-- **Proveedor de OpenCode**: reutiliza la conexión del proveedor y **su URL y su credencial** automáticamente; con un proveedor seleccionado no hay que escribir ni URL ni clave. Con `Manual` se usan la URL y la clave del plugin.
-- **Modelos**: primero se configura la URL y la clave (o se elige un proveedor), después se cargan los modelos. Al **cambiar de proveedor el modelo se deselecciona** y hay que elegir uno de la lista nueva. El selector abre un buscador en un diálogo compacto, muestra toda la lista (los modelos de audio primero) y filtra al escribir; el valor guardado es el id y la etiqueta es el nombre amigable cuando existe. Si la carga devuelve modelos, no se permite escribir a mano: solo se elige de la lista. El campo de texto queda solo como respaldo cuando no se encuentra ninguno.
-- **Voces locales**: mismo flujo; se listan las voces del sistema y se elige una.
-- **Salida local**: hay que activar explícitamente `Usar la voz del sistema`; hasta entonces la lectura queda deshabilitada, igual que el dictado sin configurar.
-- Claves de API manuales: se guardan **cifradas** con `safeStorage` (DPAPI en Windows). Nunca van a `opencode.json`; si el llavero no está disponible, se guardan como texto plano y se avisa en el log.
-- Valor por defecto de los interruptores por chat y botón **Probar** para la salida.
-- **Experimental**: activa el modo conversación para chats nuevos, el silencio que cierra el turno (1200 ms por defecto) y la pausa al perder el foco.
+- While recording it shows the live waveform (64 symmetric bars) and a `✕` at the end that cancels the dictation; while transcribing, the icon and the `✕` stay in the pill.
+- The microphone only appears when dictation has a provider configured and the chat's dictation switch is on.
+- While a reply is being read, the same pill shows a **stop** that cuts the queued audio and the current playback.
+- In conversation mode the pill switches to the conversation icon; pressing it starts the loop.
 
-La nube asume el contrato de OpenAI. Si tu proveedor usa otro formato (por ejemplo Deepgram), cambia `transcribeCloud` en `src/gui/main/transcribe-cloud.ts` y `speakCloud` en `src/gui/main/speech-cloud.ts`: el resto del plugin no cambia.
+### Chat header
 
-El icono del compositor y los controles del encabezado se calculan a partir de la configuración: binario y modelo en local, URL, modelo y clave en la nube.
+- The gear is always visible and opens a popover with the two switches (input and output) aligned right and a link to **Settings > Voice**.
+- The microphone and speech-bubble icons appear only when their direction is configured.
+- Every chat keeps its own switches through the plugin session store; new chats inherit the defaults from the settings.
+- The dictation switch is the single gate: when it is off there is no microphone icon, `Enter` and the shortcut do not dictate, and turning it off while recording or transcribing cancels the work.
 
-## Desarrollo
+### Conversation mode
+
+- It drives the microphone, the assistant turn and the playback as a single loop. While it is on, the input and output switches stay locked together.
+- Speaking while the reply is being read cuts the playback and sends your turn when you stop.
+- With a reply playing, the end of the pill shows the stop that only silences the voice.
+- `✕`, `Escape`, or pressing the pill again stops the loop and leaves the mode ready to start over.
+- The loop stops if you switch to another chat. The microphone stays open while waiting and while reading, so headphones are recommended on speakers.
+
+## Settings > Voice
+
+The page has three tabs.
+
+**Input**
+
+- Engine: `Local` or `Cloud`.
+- Microphone: any input device or the system default.
+- Provider: reuse an OpenCode provider (its base URL and credential are used automatically, so no URL or key is needed) or `Manual` with the plugin's own URL and key.
+- Models load only after the provider or URL/key is set. Changing the provider clears the selected model. The picker is a searchable dialog that lists every model (audio models first); if the provider returns models you must pick one, and the text field is only a fallback when none load.
+- Local engine: path or command of the speech-to-text binary, model file and language.
+
+**Output**
+
+- Engine: `Local` or `Cloud`.
+- Output device: any sink or the system default.
+- Cloud: model, voice and response format, with the same provider/manual rules as input.
+- Local: the system voice must be enabled explicitly before replies can be read; voices are listed from the OS and the rate is adjustable.
+- **Test** plays a short sample with the current output settings.
+
+**Experimental**
+
+- Start new chats in conversation mode.
+- Silence after speech that closes a turn (1200 ms by default).
+- Close the microphone while the window is not focused.
+
+The page also sets the defaults for the per-chat switches.
+
+Manual API keys are encrypted at rest with the operating system keychain (`safeStorage`, DPAPI on Windows) and are never written to `opencode.json` or the logs. If the keychain is unavailable the key is stored as plain text and a warning is written to the log.
+
+## Development
 
 ```powershell
-npm run watch   # recompila dist/gui-experimental.cjs al guardar
+npm run watch   # rebuild dist/gui-experimental.cjs on change
 npm run typecheck
+npm run build
 ```
 
-Cada recompilación recarga la GUI en todas las ventanas; si añades o cambias **métodos Ipc**, cierra y vuelve a abrir OpenCode Desktop para que el proceso principal registre el contrato nuevo. El log `voice: main ready { version }` indica qué versión cargó main.
+Each rebuild reloads the GUI in every window. If you add or change **Ipc methods**, restart OpenCode Desktop so the main process registers the new contract; the log line `voice: main ready { version }` shows which bundle main loaded. There is no automated test suite yet; the pure helpers (`text.ts`, `audio/wav.ts`, `audio/meter.ts`, `main/urls.ts`) are kept free of host APIs so tests can be added.
 
-## Estructura
+## Project structure
 
-```
-src/
-  index.ts                  parte servidor mínima (id del plugin)
-  gui.tsx                   entrada ./gui-experimental (setup + main)
-  gui/
-    definition.ts           stores (ajustes globales + flags por sesión)
-    i18n/{en,es}.ts         textos de la interfaz
-    contract.ts             Ipc ventana ↔ main
-    context.ts              tipo del contexto de ventana
-    flags.ts                interruptores por sesión
-    status.ts               validez de la configuración por dirección
-    text.ts                 limpieza de Markdown y troceado
-    audio/wav.ts            codificación WAV, remuestreo y base64 (puro)
-    audio/meter.ts          medición RMS, suavizado y máscara de la onda (puro)
-    audio/devices.ts        enumeración de micrófonos
-    recorder.ts             micrófono sobre los helpers de audio
-    window.tsx              composición fina de la ventana
-    window/                 dictado, entrega, voz, eventos, comandos, píldora, encabezado y ajustes
-    settings.tsx            composición de la página de ajustes
-    settings/rows.tsx       filas reutilizables de ajustes
-    settings/provider-row.tsx    selector de proveedor de OpenCode
-    settings/suggestion-row.tsx  campo con lista de modelos o voces
-    main.ts                 composición fina del proceso principal
-    main/                   claves, credenciales, procesos, transcripción, voz, modelos, voces y temporales
-  rpc.ts                    contrato RPC para resolver credenciales de OpenCode
-```
+- `src/index.ts`, `src/rpc.ts`: minimal server half (plugin id and the credential RPC).
+- `src/gui.tsx`: GUI entry that composes the definition, the window setup and the main process.
+- `src/gui/audio/`: pure WAV, metering and device helpers.
+- `src/gui/main/`: secrets, credentials, process runner, transcription, speech, models, voices and temp files.
+- `src/gui/window/`: dictation, conversation loop, delivery, playback, replies, commands, pill and header.
+- `src/gui/settings/`: settings page, rows, provider and model/voice pickers.
+- `src/gui/i18n/`: English and Spanish catalogs.
 
-Las convenciones de código están en [`AGENTS.md`](./AGENTS.md): código en inglés, módulos pequeños con una sola responsabilidad, funciones fábrica en lugar de clases y helpers puros separados del host.
+## Security
 
-## Notas
+- API keys are encrypted with the operating system keychain (`safeStorage`/DPAPI) and are never written to `opencode.json` or the logs. When a cloud engine is active, a key is sent only to the provider endpoint you configured.
+- Provider credentials are resolved on demand through the local server half, so the plugin never copies them into its own storage.
+- Dictation clips and synthesized replies are written to the OS temporary directory only while a request runs and are deleted afterwards.
 
-- El audio se captura en la ventana (permiso de micrófono del renderer) y se envía a `main` como WAV en base64. `main` sintetiza la voz y devuelve el audio; **la ventana lo reproduce** con un `<audio>`, porque `setSinkId` es la única forma de elegir el dispositivo de salida y Chromium decodifica WAV y MP3 sin programas externos. Las claves siguen viviendo en un único sitio.
-- La lectura se dispara con `session.text.ended` por cada bloque de texto, y se ignoran las sesiones hijas (subagentes).
-- Los bloques se encolan por ventana: una respuesta larga no se pisa a sí misma, y empezar a dictar corta la cola y la reproducción en curso.
-- El texto se limpia de Markdown y de las URLs antes de hablarlo, pero **conserva el contenido del código en línea** (nombres de fichero, funciones, flags), porque suele ser lo que importa de la frase; los bloques de código, con acentos o indentados, sí se omiten. Se trocea en frases de ~600 caracteres.
-- Se hablan las tablas (con o sin barras en los extremos) como frases de celdas, y desaparecen reglas, casillas, imágenes, notas al pie, emojis de dos puntos, fórmulas y los corchetes que quedan sueltos. Las entidades HTML se decodifican y los identificadores con guion bajo se respetan.
-- Los enlaces se leen por su texto; cuando la dirección aparece escrita (URL suelta, autolink o correo) **sí se dice**, sin esquema ni query y con los separadores nombrados (punto, barra, arroba, guion).
-- El dictado no se detiene solo al hacer una pausa: hay que volver a pulsar el atajo o el micrófono. Si la captura es silenciosa, el aviso lo distingue de “no se ha detectado voz”.
-- Las credenciales de OpenCode se resuelven en la parte servidor y se entregan al proceso principal por el servidor local; no se escriben en la configuración ni en los logs.
-- En modo conversación el micrófono queda abierto mientras esperas y mientras se lee la respuesta. Hablar por encima de la lectura la corta y empieza un turno nuevo; con altavoces el micro puede oírse a sí mismo, así que para interrumpir hablando conviene usar auriculares.
-- El dictado manual y la conversación comparten un solo grabador; en conversación solo se guarda un pre-roll de 1,2 s hasta que hay voz, así que una espera de minutos no acumula audio.
-- El formato de salida de la nube ya no depende del reproductor del sistema: `mp3`, `wav`, `opus`, `aac` y `flac` se decodifican en la ventana. Si el proveedor responde con JSON o texto, el error muestra el cuerpo de la respuesta.
-- Desactivar el plugin entero: **Settings > Extensions > Plugins**, o quita la entrada de `opencode.jsonc`.
+## Behavior notes
+
+- Audio is captured in the window and sent to the main process as base64 WAV. The main process synthesizes the voice and the window plays it with `<audio>` and `setSinkId`, which is the only way to choose the output device; Chromium decodes WAV and MP3 without external programs.
+- Replies are queued per window: a long answer does not overwrite itself, and starting a dictation cuts the queue and the current playback.
+- Reading is triggered by `session.text.ended` for each text block and ignores child (subagent) sessions.
+- Text is cleaned of Markdown and URLs before speaking, but inline code is kept because it is usually the point of the sentence; code blocks are skipped. Sentences are chunked at about 600 characters.
+- Tables are read as cell sentences; rules, checkboxes, images, footnotes, emoji, formulas and stray brackets are dropped. Links are read by their text; a written address is spoken without its scheme or query, with the separators named.
+- Dictation does not stop on a pause: press the shortcut or the microphone again to stop and transcribe. A silent capture is reported differently from "no voice detected".
+- Cloud output in `mp3`, `wav`, `opus`, `aac` or `flac` is decoded in the window. If the provider answers with JSON or text, the error shows the body.
+- Disable the whole plugin in **Settings > Extensions > Plugins**, or remove its entry from the config.
 - Logs: `~/.local/share/opencode/log/opencode.log`.
+
+## Cloud contract
+
+The cloud path assumes the OpenAI `/audio/transcriptions` and `/audio/speech` contract. For a different format, change `transcribeCloud` in `src/gui/main/transcribe-cloud.ts` and `speakCloud` in `src/gui/main/speech-cloud.ts`; nothing else needs to change.
+
+## Limitations
+
+- The GUI plugin API is experimental and may change between releases.
+- Conversation mode on speakers can hear its own voice; use headphones to interrupt by speaking.
+- The GUI part is loaded only from the entry in the global configuration.
+- Local voices depend on the OS: SAPI on Windows, `say` on macOS, `espeak-ng` on Linux. Only the Windows path has been tested.
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
+
+## Contributing
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) and [AGENTS.md](./AGENTS.md).

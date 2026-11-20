@@ -37,6 +37,8 @@ export function createSpeech(ctx: Ctx): Speech {
   let generation = 0
   let queue: Promise<void> = Promise.resolve()
   let lastError = ""
+  /** Request of the chunk being synthesized, so Stop aborts the cloud call in flight. */
+  let inFlight: AbortController | undefined
   /** Reply that was stopped, so its remaining blocks stay silent instead of resuming. */
   let hushed = ""
   /** Block being read, used to silence the rest of its reply when it is stopped. */
@@ -47,6 +49,8 @@ export function createSpeech(ctx: Ctx): Speech {
     if (!clean) return
 
     currentID = id
+    const controller = new AbortController()
+    inFlight = controller
     setSpeaking(true)
     try {
       for (const [index, part] of chunk(clean, CHUNK_SIZE).entries()) {
@@ -68,7 +72,7 @@ export function createSpeech(ctx: Ctx): Speech {
             voice: settings.speak.cloudVoice,
             format: settings.speak.format,
           },
-        })
+        }, { signal: controller.signal })
 
         if (ticket !== generation) return
         if (!spoken.audio) return
@@ -83,6 +87,7 @@ export function createSpeech(ctx: Ctx): Speech {
       lastError = failure
       ctx.toast.show({ title: ctx.t("status.speakFailed"), description: failure, variant: "error" })
     } finally {
+      if (inFlight === controller) inFlight = undefined
       if (ticket === generation) setSpeaking(false)
     }
   }
@@ -99,6 +104,8 @@ export function createSpeech(ctx: Ctx): Speech {
   }
 
   const cancel = () => {
+    inFlight?.abort()
+    inFlight = undefined
     if (currentID) {
       const cut = currentID.lastIndexOf(":")
       hushed = cut > 0 ? currentID.slice(0, cut) : currentID

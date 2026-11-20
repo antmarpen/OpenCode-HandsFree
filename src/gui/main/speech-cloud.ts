@@ -23,7 +23,11 @@ const MIME: Record<string, string> = {
 }
 
 /** Requests speech from an OpenAI-compatible `/audio/speech` endpoint. */
-export async function speakCloud(input: CloudSpeech, apiKey: string): Promise<CloudAudio> {
+export async function speakCloud(
+  input: CloudSpeech,
+  apiKey: string,
+  signal?: AbortSignal,
+): Promise<CloudAudio> {
   if (!input.url) throw new Error("The provider base URL is not configured")
 
   const format = (input.format || "wav").replace(/^\./, "")
@@ -40,6 +44,7 @@ export async function speakCloud(input: CloudSpeech, apiKey: string): Promise<Cl
       voice: input.voice || "alloy",
       response_format: format,
     }),
+    signal,
   })
 
   if (!response.ok) {

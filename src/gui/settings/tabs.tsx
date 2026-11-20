@@ -22,7 +22,7 @@ export function VoiceTabs(props: { readonly value: VoiceTab; onChange(tab: Voice
   ]
 
   return (
-    <div class="opencode-voice-tabs" role="tablist" aria-label={ctx.t("settings.title")}>
+    <div class="opencode-handsfree-tabs" role="tablist" aria-label={ctx.t("settings.title")}>
       {tabs.map((tab) => (
         <button
           type="button"
@@ -30,7 +30,7 @@ export function VoiceTabs(props: { readonly value: VoiceTab; onChange(tab: Voice
           role="tab"
           aria-selected={props.value === tab.id}
           aria-controls={`voice-panel-${tab.id}`}
-          class="opencode-voice-tab"
+          class="opencode-handsfree-tab"
           onClick={() => props.onChange(tab.id)}
         >
           {tab.label}
