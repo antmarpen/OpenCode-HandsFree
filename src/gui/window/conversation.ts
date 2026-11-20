@@ -21,7 +21,7 @@ export interface Conversation {
 }
 
 /** How often the driver reads the microphone level. */
-const TICK_MS = 80
+const TICK_MS = 60
 /** Level that counts as voice while nothing is playing. */
 const VOICE_LEVEL = 0.22
 /**
@@ -30,7 +30,7 @@ const VOICE_LEVEL = 0.22
  * a noise; the user feels anything longer as a lag before the reply stops.
  */
 const BARGE_LEVEL = 0.3
-const BARGE_MS = 160
+const BARGE_MS = 100
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
 
