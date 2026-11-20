@@ -33,9 +33,12 @@ const BARGE_MS = 80
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
 /** Audio kept before the detected onset, so the first syllable keeps its attack. */
-const BARGE_MARGIN_S = 0.2
-/** Shortest turn a barge may keep, so a soft first word is not cut. */
-const BARGE_MIN_S = 0.5
+const BARGE_MARGIN_S = 0.35
+/**
+ * Shortest turn a barge may keep. Words like "dromedario" open with a soft consonant the
+ * level only notices at the vowel, so the clip has to reach back into the syllable.
+ */
+const BARGE_MIN_S = 0.9
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
