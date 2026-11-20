@@ -134,7 +134,7 @@ export const es: Record<keyof typeof en, string> = {
   "status.inputOff": "Dictado desactivado en este chat",
   "status.conversationOn": "Modo conversación activado en este chat",
   "status.conversationOff": "Modo conversación desactivado en este chat",
-  "status.conversationBlocked": "Modo conversación en pausa: hay texto escrito en el compositor",
+  "status.conversationBlocked": "Turno descartado: hay texto escrito en el compositor",
   "status.outputOn": "Se leerán las respuestas en este chat",
   "status.outputOff": "No se leerán las respuestas en este chat",
   "status.voiceOn": "Voz activada en este chat",

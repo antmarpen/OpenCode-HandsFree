@@ -121,18 +121,24 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
     const controller = new AbortController()
     inFlight = controller
 
+    // In a conversation a cough or a noise is a turn that says nothing, not an error to
+    // report: the loop keeps listening and the user never sees a warning per sneeze.
+    const quiet = () => !!session && readFlags(ctx, session).conversation
+
     try {
       const take = await current.stop()
       if (controller.signal.aborted) return
       if (take.seconds < MIN_SECONDS) {
-        ctx.toast.show({ title: ctx.t("status.noSpeech") })
+        if (!quiet()) ctx.toast.show({ title: ctx.t("status.noSpeech") })
         return
       }
       if (take.peak < 0.001) {
-        ctx.toast.show({
-          title: ctx.t("status.noMicrophoneAudio"),
-          description: ctx.t("status.noMicrophoneAudio.description"),
-        })
+        if (!quiet()) {
+          ctx.toast.show({
+            title: ctx.t("status.noMicrophoneAudio"),
+            description: ctx.t("status.noMicrophoneAudio.description"),
+          })
+        }
         return
       }
 
@@ -158,7 +164,7 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
 
       const text = result.text.trim()
       if (!text) {
-        ctx.toast.show({ title: ctx.t("status.noSpeech") })
+        if (!quiet()) ctx.toast.show({ title: ctx.t("status.noSpeech") })
         return
       }
       if (session) {
@@ -170,7 +176,8 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
       }
     } catch (error) {
       if (!controller.signal.aborted) {
-        notifyError(ctx.t("status.transcribeFailed"), String(error))
+        if (quiet()) console.warn("voice: turn failed", String(error))
+        else notifyError(ctx.t("status.transcribeFailed"), String(error))
       }
     } finally {
       if (inFlight === controller) inFlight = undefined

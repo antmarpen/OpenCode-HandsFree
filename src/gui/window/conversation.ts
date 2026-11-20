@@ -98,14 +98,16 @@ export function createConversation(
   }
 
   const finishTurn = () => {
-    const typed = ctx.screen.current()?.composer.text().trim()
-    if (typed) {
+    heard = false
+
+    // Typed text belongs to the user: drop this turn and keep the loop alive, because a
+    // stray word or a cough must never end the conversation.
+    if (ctx.screen.current()?.composer.text().trim()) {
       ctx.toast.show({ title: ctx.t("status.conversationBlocked") })
-      stop()
+      dictation.reset()
       return
     }
 
-    heard = false
     setPhase("transcribing")
     void dictation.toggle()
   }

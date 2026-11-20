@@ -132,7 +132,7 @@ export const en = {
   "status.inputOff": "Dictation off for this chat",
   "status.conversationOn": "Conversation mode on for this chat",
   "status.conversationOff": "Conversation mode off for this chat",
-  "status.conversationBlocked": "Conversation paused: the composer has text",
+  "status.conversationBlocked": "Turn skipped: the composer has text",
   "status.outputOn": "Replies will be read in this chat",
   "status.outputOff": "Replies will not be read in this chat",
   "status.voiceOn": "Voice on for this chat",
