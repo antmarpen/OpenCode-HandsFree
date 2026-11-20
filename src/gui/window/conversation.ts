@@ -31,7 +31,7 @@ const VOICE_LEVEL = 0.22
  * longer than the gap is the end of that sound, not a syllable.
  */
 const BARGE_LEVEL = 0.26
-const BARGE_MS = 900
+const BARGE_MS = 600
 const BARGE_GAP_MS = 250
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
