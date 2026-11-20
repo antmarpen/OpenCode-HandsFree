@@ -114,7 +114,7 @@ Las convenciones de código están en [`AGENTS.md`](./AGENTS.md): código en ing
 - El audio se captura en la ventana (permiso de micrófono del renderer) y se envía a `main` como WAV en base64. `main` sintetiza la voz y devuelve el audio; **la ventana lo reproduce** con un `<audio>`, porque `setSinkId` es la única forma de elegir el dispositivo de salida y Chromium decodifica WAV y MP3 sin programas externos. Las claves siguen viviendo en un único sitio.
 - La lectura se dispara con `session.text.ended` por cada bloque de texto, y se ignoran las sesiones hijas (subagentes).
 - Los bloques se encolan por ventana: una respuesta larga no se pisa a sí misma, y empezar a dictar corta la cola y la reproducción en curso.
-- El texto se limpia de Markdown, bloques de código y URLs antes de hablarlo, y se trocea en frases de ~600 caracteres.
+- El texto se limpia de Markdown y de las URLs antes de hablarlo, pero **conserva el contenido del código en línea** (nombres de fichero, funciones, flags), porque suele ser lo que importa de la frase; los bloques de código sí se omiten. Se trocea en frases de ~600 caracteres.
 - El dictado no se detiene solo al hacer una pausa: hay que volver a pulsar el atajo o el micrófono. Si la captura es silenciosa, el aviso lo distingue de “no se ha detectado voz”.
 - Las credenciales de OpenCode se resuelven en la parte servidor y se entregan al proceso principal por el servidor local; no se escriben en la configuración ni en los logs.
 - En modo conversación el micrófono queda abierto mientras esperas y mientras se lee la respuesta. Hablar por encima de la lectura la corta y empieza un turno nuevo; con altavoces el micro puede oírse a sí mismo, así que para interrumpir hablando conviene usar auriculares.
