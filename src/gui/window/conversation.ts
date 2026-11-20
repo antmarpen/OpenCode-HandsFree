@@ -35,13 +35,11 @@ const BARGE_MS = 600
 const BARGE_GAP_MS = 250
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
-/** Audio kept before the detected onset, so the first syllable keeps its attack. */
-const BARGE_MARGIN_S = 0.35
 /**
- * Shortest turn a barge may keep. Words like "dromedario" open with a soft consonant the
- * level only notices at the vowel, so the clip has to reach back into the syllable.
+ * Audio kept when the first sound of a turn is detected: it reaches back into the syllable
+ * that woke the detector, so the recording starts at the user's first word.
  */
-const BARGE_MIN_S = 0.9
+const BARGE_ONSET_S = 0.6
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -225,19 +223,24 @@ export function createConversation(
       const voiced = level >= BARGE_LEVEL && now - playSince >= BARGE_GUARD_MS
 
       if (voiced) {
-        if (!voiceSince) voiceSince = now
+        if (!voiceSince) {
+          // The first sound of the turn: keep it from here on, so nothing said while the
+          // interruption is being confirmed can be lost.
+          voiceSince = now
+          dictation.trim(BARGE_ONSET_S)
+        }
         voiceEnd = now
       } else if (voiceSince && now - voiceEnd > BARGE_GAP_MS) {
-        // The sound stopped: a later noise starts the count over instead of adding to it.
+        // A burst that stopped: a cough, not a turn. Back to holding, ready for the next.
         voiceSince = 0
+        dictation.reset()
       }
 
       if (voiceSince && now - voiceSince >= BARGE_MS) {
-        // The user has been talking over the reply: cut it and start the turn at the
-        // syllable that began it, dropping the reply's own tail but keeping that word.
+        // The user has been talking over the reply: silence it. The turn has been
+        // accumulating since its first sound, so it is complete already.
         speech.cancel()
         void ctx.main(Voice).stop().catch(() => {})
-        dictation.trim(Math.max(BARGE_MIN_S, (now - voiceSince) / 1000 + BARGE_MARGIN_S))
         heard = true
         lastVoice = now
         playSince = 0
