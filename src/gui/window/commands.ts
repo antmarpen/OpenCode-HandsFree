@@ -15,10 +15,14 @@ export function registerCommands(
   status: VoiceStatus,
   stop: () => void,
 ) {
-  // Dictation needs a chat, a configured engine and the chat's own switch on.
+  // Dictation needs a chat, a configured engine, the chat's own switch on, and no
+  // conversation mode: there the loop drives the microphone instead.
   const canDictate = () => {
     const session = ctx.sessions.current()
-    return !!session && status.inputReady() && readFlags(ctx, session).input
+    if (!session) return false
+    if (!status.inputReady()) return false
+    const flags = readFlags(ctx, session)
+    return flags.input && !flags.conversation
   }
 
   ctx.add(Command, (): CommandItem => ({

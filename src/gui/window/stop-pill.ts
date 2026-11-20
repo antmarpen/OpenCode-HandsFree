@@ -23,10 +23,13 @@ export function registerStopPill(
     order: 91,
     show: (input): ComposerPillView | undefined => {
       if (!speaking()) return undefined
-      if (conversation.active()) return undefined
+      if (conversation.running()) return undefined
 
       const integrated =
-        !dictation.active() && status.inputReady() && readFlags(ctx, input.session).input
+        !conversation.armed() &&
+        !dictation.active() &&
+        status.inputReady() &&
+        readFlags(ctx, input.session).input
       if (integrated) return undefined
 
       return {

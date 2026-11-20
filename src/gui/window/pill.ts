@@ -44,7 +44,15 @@ const MIC_MASK = maskUrl(
   </g>`,
 )
 
-/** Drops the turn in progress: the recording, the transcription or the whole mode. */
+/** Two speech bubbles: the armed conversation mode, waiting to be pressed. */
+const CONVERSATION_MASK = maskUrl(
+  `<g transform="scale(0.667)" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M3 4h12.5a2 2 0 0 1 2 2v5.5a2 2 0 0 1-2 2H9l-4 3v-3H3a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+    <path d="M18 8.2h2.2a1.8 1.8 0 0 1 1.8 1.8v3.8a1.8 1.8 0 0 1-1.8 1.8h-1v2.4l-2.9-2.4"/>
+  </g>`,
+)
+
+/** Drops the turn in progress: the recording, the transcription or the conversation loop. */
 const CANCEL_MASK = maskUrl(
   `<path d="M4.6 4.6 11.4 11.4M11.4 4.6 4.6 11.4" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/>`,
 )
@@ -88,8 +96,8 @@ function iconBox(left: string, transform: string): string {
   ${MASK_PROPS}`
 }
 
-/** A lone microphone with no wave and no action: the plain pill. */
-function compactRule(): string {
+/** A lone icon with no wave and no action: the plain pill. */
+function compactRule(icon: string): string {
   return `[data-slot=session-plugin-pill][aria-label$="${MARK}"] {
   position: relative;
   width: 28px;
@@ -97,7 +105,7 @@ function compactRule(): string {
   padding: 0;
   gap: 0;
   justify-content: center;
-  --icon-mask: ${MIC_MASK};
+  --icon-mask: ${icon};
 }
 [data-slot=session-plugin-pill][aria-label$="${MARK}"] > svg,
 [data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
@@ -159,7 +167,8 @@ function activeRule(icon: string, iconColor: string, wave: string, action: strin
 /**
  * A microphone next to the composer. It appears when dictation is usable, starts and
  * stops recording, shows the live wave and carries the cancel or stop glyph. In
- * conversation mode it stays open between turns and the cancel glyph ends the mode.
+ * conversation mode it wears the conversation glyph, starts the loop when pressed and
+ * keeps the microphone open between turns; the cancel glyph stops the loop, not the mode.
  */
 export function registerPill(
   ctx: Ctx,
@@ -182,16 +191,19 @@ export function registerPill(
   ctx.add(Style, () => {
     const recording = dictation.recording()
     const working = dictation.working()
-    const talking = conversation.active()
-    const speaking = speech.speaking() && !recording && !working && !talking
+    const running = conversation.running()
+    const armed = conversation.armed()
+    const speaking = speech.speaking() && !recording && !working && !running && !armed
 
-    if (!recording && !working && !talking && !speaking) return `${BASE_RULES}\n${compactRule()}`
+    if (!recording && !working && !running && !speaking) {
+      return `${BASE_RULES}\n${compactRule(armed ? CONVERSATION_MASK : MIC_MASK)}`
+    }
 
     const levels = dictation.levels()
     // A conversation keeps the microphone open for minutes: only paint the wave when
     // there was voice in the last second, and never while the reply's own audio plays.
     const audible = levels.slice(-12).some((level) => level > 0.15)
-    const wave = recording && (!talking || (audible && !speech.speaking())) ? waveMask(levels) : ""
+    const wave = recording && (!running || (audible && !speech.speaking())) ? waveMask(levels) : ""
     const icon = working ? workingMask(frame()) : MIC_MASK
     const iconColor = working
       ? "var(--color-v2-state-fg-warning, currentColor)"
@@ -203,10 +215,10 @@ export function registerPill(
 
   /** Whether the end of the capsule currently has something to do. */
   const hasAction = () =>
-    conversation.active() || dictation.active() || speech.speaking()
+    conversation.running() || dictation.active() || (!conversation.armed() && speech.speaking())
 
   const action = () => {
-    if (conversation.active()) conversation.stop()
+    if (conversation.running()) conversation.stop()
     else if (dictation.recording() || dictation.working()) dictation.cancel()
     else if (speech.speaking()) stop()
   }
@@ -238,8 +250,7 @@ export function registerPill(
 
       const recording = dictation.recording()
       const working = dictation.working()
-      const talking = conversation.active()
-      const speaking = speech.speaking() && !recording && !working && !talking
+      const talking = conversation.running() || conversation.armed()
 
       return {
         icon: "outline-audio",
@@ -253,7 +264,10 @@ export function registerPill(
                 ? ctx.t("pill.conversation")
                 : ctx.t("pill.dictate")
         }${MARK}`,
-        run: () => void dictation.toggle(),
+        run: () => {
+          if (conversation.armed()) conversation.start()
+          else void dictation.toggle()
+        },
       }
     },
   })

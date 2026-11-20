@@ -1,7 +1,7 @@
 import { createSignal, onCleanup } from "solid-js"
 import { Voice } from "../contract"
 import type { Ctx } from "../context"
-import { readFlags, setFlag } from "../flags"
+import { readFlags } from "../flags"
 import type { VoiceStatus } from "../status"
 import type { Dictation } from "./dictation"
 import type { Speech } from "./speech"
@@ -9,10 +9,14 @@ import type { Speech } from "./speech"
 export type ConversationPhase = "idle" | "listening" | "speaking" | "transcribing" | "suspended"
 
 export interface Conversation {
-  /** Conversation mode is on for the routed chat and everything it needs is configured. */
-  readonly active: () => boolean
+  /** The chat is in conversation mode: the pill shows the conversation icon and waits to be pressed. */
+  readonly armed: () => boolean
+  /** The loop is running: listening, thinking or speaking. */
+  readonly running: () => boolean
   readonly phase: () => ConversationPhase
-  /** Ends the mode for the routed chat: switches off, microphone closed, reading cut. */
+  /** Starts the loop for the routed chat. */
+  start(): void
+  /** Stops the loop and goes back to the armed state, without leaving the mode. */
   stop(): void
 }
 
@@ -27,8 +31,8 @@ const BARGE_MS = 260
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
  * silence, sends it, keeps listening while the agent works and lets the user talk over
- * a reply. It owns the dictation recording only while the mode is on; the manual pill
- * keeps working when it is off.
+ * a reply. Enabling the mode only arms it; the loop starts when the user presses the
+ * composer pill, which is also how the mode stays out of the way until then.
  */
 export function createConversation(
   ctx: Ctx,
@@ -37,7 +41,10 @@ export function createConversation(
   status: VoiceStatus,
 ): Conversation {
   const [phase, setPhase] = createSignal<ConversationPhase>("idle")
+  const [running, setRunning] = createSignal(false)
 
+  /** Chat the loop was started for; the recording itself is tracked separately. */
+  let runOwner: string | undefined
   /** Chat the current recording belongs to, when the driver started it. */
   let owner: string | undefined
   let heard = false
@@ -45,23 +52,22 @@ export function createConversation(
   let bargeSince = 0
   let suspended = false
   let wasPlaying = false
+  /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
+  let nextListenAt = 0
 
   const routed = () => ctx.sessions.current()
-
-  const active = () => {
+  const modeOn = () => {
     const session = routed()
-    if (!session) return false
-    if (!readFlags(ctx, session).conversation) return false
-    return status.inputReady() && status.outputReady()
+    return !!session && readFlags(ctx, session).conversation
   }
+  const ready = () => status.inputReady() && status.outputReady()
+
+  const armed = () => modeOn() && ready() && !running()
 
   const silence = () => {
     const value = ctx.stores.settings.value.conversation.silenceMs
     return Math.max(400, Math.min(5000, value))
   }
-
-  /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
-  let nextListenAt = 0
 
   const listen = () => {
     const session = routed()
@@ -88,12 +94,30 @@ export function createConversation(
     void dictation.toggle()
   }
 
-  const stop = () => {
-    const session = routed()
-    if (session) setFlag(ctx, session, "conversation", false)
+  const start = () => {
+    if (!modeOn() || !ready() || running()) return
 
+    // Pressing the pill is the user's turn: stop whatever was being read.
+    speech.cancel()
+    void ctx.main(Voice).stop().catch(() => {})
+
+    runOwner = routed()?.key
     owner = undefined
     heard = false
+    bargeSince = 0
+    nextListenAt = 0
+    setRunning(true)
+    setPhase("listening")
+  }
+
+  const stop = () => {
+    if (!running()) return
+
+    setRunning(false)
+    runOwner = undefined
+    owner = undefined
+    heard = false
+    bargeSince = 0
     dictation.cancel()
     speech.cancel()
     void ctx.main(Voice).stop().catch(() => {})
@@ -107,12 +131,28 @@ export function createConversation(
       if (owner && dictation.recording()) dictation.cancel()
       owner = undefined
       heard = false
+      if (running()) setRunning(false)
       setPhase("idle")
       return
     }
 
-    if (!active()) {
+    if (!running()) {
+      if (owner && dictation.recording()) {
+        dictation.cancel()
+        owner = undefined
+      }
       setPhase("idle")
+      return
+    }
+
+    if (!ready()) {
+      stop()
+      return
+    }
+
+    if (runOwner !== session.key) {
+      // The user moved to another chat: stop the loop and stay armed here.
+      stop()
       return
     }
 
@@ -135,14 +175,6 @@ export function createConversation(
     if (owner === undefined) {
       // A manual recording owns the microphone; the driver waits for it to end.
       setPhase("idle")
-      return
-    }
-
-    if (owner !== session.key) {
-      // The recording belongs to another chat: drop it and start over here.
-      dictation.cancel()
-      owner = undefined
-      setPhase("listening")
       return
     }
 
@@ -186,7 +218,7 @@ export function createConversation(
   }
 
   const onBlur = () => {
-    if (!active()) return
+    if (!running() || !modeOn()) return
     if (!ctx.stores.settings.value.conversation.suspendOnBlur) return
 
     suspended = true
@@ -210,5 +242,5 @@ export function createConversation(
     window.removeEventListener("focus", onFocus)
   })
 
-  return { active, phase, stop }
+  return { armed, running, phase, start, stop }
 }

@@ -46,7 +46,7 @@ export const en = {
   "settings.voice": "Voice",
   "settings.conversation.default": "Conversation mode in new chats",
   "settings.conversation.default.description":
-    "Dictates, sends and reads on its own, and listens again when the reply ends.",
+    "Dictates, sends and reads on its own. The composer pill switches to the conversation icon; press it to start.",
   "settings.conversation.silence": "Silence to send",
   "settings.conversation.silence.description":
     "Silence that closes the turn, in milliseconds.",

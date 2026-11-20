@@ -48,7 +48,7 @@ export const es: Record<keyof typeof en, string> = {
   "settings.voice": "Voz",
   "settings.conversation.default": "Modo conversación en chats nuevos",
   "settings.conversation.default.description":
-    "Dicta, envía y lee solo, y vuelve a escuchar cuando termina la respuesta.",
+    "Dicta, envía y lee solo. La píldora del compositor cambia al icono de conversación; púlsala para empezar.",
   "settings.conversation.silence": "Silencio para enviar",
   "settings.conversation.silence.description":
     "Silencio que cierra el turno, en milisegundos.",
