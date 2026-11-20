@@ -9,6 +9,7 @@ coverage/
 *.bak
 *.orig
 *.rej
+*.tgz
 
 .env
 .env.*

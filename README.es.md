@@ -26,16 +26,33 @@ Voz bidireccional manos libres para **OpenCode Desktop**.
 
 ## Instalación y activación
 
+Instala el paquete publicado con la CLI de OpenCode:
+
+```sh
+opencode plugin add opencode-handsfree
+```
+
+O añádelo al array `plugins` de tu `opencode.jsonc` **global** (normalmente `%USERPROFILE%\.config\opencode\opencode.jsonc` en Windows o `~/.config/opencode/opencode.jsonc` en el resto):
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["opencode-handsfree"]
+}
+```
+
+Fija una versión con `opencode-handsfree@0.1.0`. El host descarga el paquete, incluido el bundle GUI ya construido, así que no hay que compilar nada en local. Reinicia OpenCode Desktop tras la primera instalación.
+
+### Desde un clon local
+
+Para desarrollar, clona el repositorio, instala dependencias y compila una vez, y apunta `plugins` a la ruta absoluta:
+
 ```powershell
 git clone https://github.com/antmarpen/opencode-handsfree.git
 cd opencode-handsfree
 npm ci
 npm run build
 ```
-
-`dist/gui-experimental.cjs` se genera en local y no está versionado.
-
-Añade la ruta absoluta del repositorio al array `plugins` de tu `opencode.jsonc` **global** (normalmente `%USERPROFILE%\.config\opencode\opencode.jsonc` en Windows o `~/.config/opencode/opencode.jsonc` en el resto):
 
 ```jsonc
 {
@@ -44,7 +61,7 @@ Añade la ruta absoluta del repositorio al array `plugins` de tu `opencode.jsonc
 }
 ```
 
-Reinicia OpenCode Desktop. Después de cada recompilación la parte GUI se recarga en todas las ventanas; un método Ipc nuevo necesita un reinicio completo.
+Después de cada recompilación la parte GUI se recarga en todas las ventanas; un método Ipc nuevo necesita un reinicio completo.
 
 ## Uso
 

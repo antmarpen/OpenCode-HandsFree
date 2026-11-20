@@ -24,7 +24,9 @@
   },
   "author": "antmarpen (https://github.com/antmarpen)",
   "license": "MIT",
-  "private": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "engines": {
     "node": "^20.19.0 || >=22.12.0"
@@ -41,7 +43,8 @@
   "scripts": {
     "build": "vite build",
     "watch": "vite build --watch",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@opencode/plugin": "^2.3.2"

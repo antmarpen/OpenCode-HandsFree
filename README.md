@@ -26,16 +26,33 @@ Hands-free bidirectional voice for **OpenCode Desktop**.
 
 ## Install and enable
 
+Install the published package with the OpenCode CLI:
+
+```sh
+opencode plugin add opencode-handsfree
+```
+
+Or add it to the `plugins` array of your **global** `opencode.jsonc` (usually `%USERPROFILE%\.config\opencode\opencode.jsonc` on Windows or `~/.config/opencode/opencode.jsonc` elsewhere):
+
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["opencode-handsfree"]
+}
+```
+
+Pin a version with `opencode-handsfree@0.1.0`. The host downloads the package, including its prebuilt GUI bundle, so nothing is compiled locally. Restart OpenCode Desktop after the first install.
+
+### From a local checkout
+
+For development, clone the repository, install dependencies and build once, then point `plugins` at the absolute path:
+
 ```powershell
 git clone https://github.com/antmarpen/opencode-handsfree.git
 cd opencode-handsfree
 npm ci
 npm run build
 ```
-
-`dist/gui-experimental.cjs` is built locally and is not committed.
-
-Add the absolute path of the repository to the `plugins` array of your **global** `opencode.jsonc` (usually `%USERPROFILE%\.config\opencode\opencode.jsonc` on Windows or `~/.config/opencode/opencode.jsonc` elsewhere):
 
 ```jsonc
 {
@@ -44,7 +61,7 @@ Add the absolute path of the repository to the `plugins` array of your **global*
 }
 ```
 
-Restart OpenCode Desktop. After every rebuild the GUI part reloads in all windows; a new Ipc method needs a full restart.
+After every rebuild the GUI part reloads in all windows; a new Ipc method needs a full restart.
 
 ## Usage
 
