@@ -37,13 +37,47 @@ function writeFlag(ctx: Ctx, session: SessionRef, flag: VoiceFlag, value: boolea
 }
 
 /**
+ * Conversation needs both directions, so switching it on switches them on and remembers
+ * what they were; switching it off puts them back, defaults included.
+ */
+function writeConversation(ctx: Ctx, session: SessionRef, value: boolean) {
+  const store = ctx.stores.voice(session)
+
+  if (!value) {
+    store.update((draft) => {
+      draft.conversation = false
+      draft.input = draft.beforeInput
+      draft.output = draft.beforeOutput
+      draft.beforeInput = undefined
+      draft.beforeOutput = undefined
+    })
+    return
+  }
+
+  const previous = store.value
+  store.update((draft) => {
+    draft.beforeInput = previous?.input
+    draft.beforeOutput = previous?.output
+    draft.conversation = true
+    draft.input = true
+    draft.output = true
+  })
+}
+
+/**
  * The single entry point for changing one switch: writes the value and announces it.
- * Turning either direction off leaves conversation mode, because the loop needs both.
+ * While conversation mode is on it owns both directions, so their switches are locked.
  */
 export function setFlag(ctx: Ctx, session: SessionRef, flag: VoiceFlag, value: boolean): boolean {
-  writeFlag(ctx, session, flag, value)
-  if (flag !== "conversation" && !value) writeFlag(ctx, session, "conversation", false)
+  if (flag === "conversation") {
+    writeConversation(ctx, session, value)
+    ctx.toast.show({ title: ctx.t(MESSAGES.conversation[value ? "on" : "off"]) })
+    return value
+  }
 
+  if (readFlags(ctx, session).conversation) return false
+
+  writeFlag(ctx, session, flag, value)
   ctx.toast.show({ title: ctx.t(MESSAGES[flag][value ? "on" : "off"]) })
   return value
 }
@@ -59,6 +93,8 @@ export function setVoice(ctx: Ctx, session: SessionRef, enabled: boolean) {
     draft.input = enabled
     draft.output = enabled
     draft.conversation = false
+    draft.beforeInput = undefined
+    draft.beforeOutput = undefined
   })
 
   ctx.toast.show({ title: ctx.t(enabled ? "status.voiceOn" : "status.voiceOff") })

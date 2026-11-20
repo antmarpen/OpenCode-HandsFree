@@ -57,6 +57,9 @@ export const SessionVoice = Schema.Struct({
   output: Schema.optional(Schema.Boolean),
   /** Hands-free loop: implies input and output while it is on. */
   conversation: Schema.optional(Schema.Boolean),
+  /** What the two directions were before the loop took them, to put them back. */
+  beforeInput: Schema.optional(Schema.Boolean),
+  beforeOutput: Schema.optional(Schema.Boolean),
 })
 
 export const definition = Plugin.define({

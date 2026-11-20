@@ -32,6 +32,7 @@ function VoiceHeader(props: { readonly session: MountedSession; readonly status:
         <ToggleButton
           label={ctx.t("pill.input")}
           pressed={flags().input}
+          disabled={flags().conversation}
           onClick={() => toggleFlag(ctx, props.session, "input")}
         >
           <MicIcon />
@@ -42,6 +43,7 @@ function VoiceHeader(props: { readonly session: MountedSession; readonly status:
         <ToggleButton
           label={ctx.t("pill.output")}
           pressed={flags().output}
+          disabled={flags().conversation}
           onClick={() => toggleFlag(ctx, props.session, "output")}
         >
           <ReadAloudIcon />
@@ -60,6 +62,7 @@ function VoiceHeader(props: { readonly session: MountedSession; readonly status:
 function ToggleButton(props: {
   readonly label: string
   readonly pressed: boolean
+  readonly disabled?: boolean
   readonly children: JSX.Element
   onClick(): void
 }) {
@@ -75,6 +78,7 @@ function ToggleButton(props: {
         data-state={props.pressed ? "pressed" : undefined}
         aria-label={props.label}
         aria-pressed={props.pressed}
+        disabled={props.disabled}
         style={props.pressed ? { color: "var(--v2-text-text-accent)" } : undefined}
         onClick={() => props.onClick()}
       >

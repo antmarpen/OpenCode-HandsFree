@@ -110,6 +110,7 @@ export const en = {
   "pill.output": "Read replies in this chat",
   "pill.dictate": "Start or stop dictation",
   "pill.conversation": "Conversation in this chat",
+  "pill.conversationLocked": "Dictation and reading follow conversation mode.",
   "pill.settings": "Open voice settings",
   "pill.on": "On",
   "pill.off": "Off",

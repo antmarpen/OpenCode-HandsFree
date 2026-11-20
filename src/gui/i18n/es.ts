@@ -112,6 +112,7 @@ export const es: Record<keyof typeof en, string> = {
   "pill.output": "Leer respuestas en este chat",
   "pill.dictate": "Iniciar o detener el dictado",
   "pill.conversation": "Conversación en este chat",
+  "pill.conversationLocked": "El dictado y la lectura siguen al modo conversación.",
   "pill.settings": "Abrir ajustes de voz",
   "pill.on": "Sí",
   "pill.off": "No",

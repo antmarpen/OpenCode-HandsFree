@@ -90,6 +90,8 @@ function VoicePopover(props: {
 }) {
   const ctx = usePlugin<typeof definition>()
   const flags = () => readFlags(ctx, props.session)
+  /** The loop owns both directions: their switches follow it and cannot be changed. */
+  const locked = () => flags().conversation
 
   let card: HTMLDivElement | undefined
 
@@ -156,14 +158,14 @@ function VoicePopover(props: {
         icon={<MicIcon />}
         label={ctx.t("pill.input")}
         checked={props.status.inputReady() ? flags().input : false}
-        disabled={!props.status.inputReady()}
+        disabled={!props.status.inputReady() || locked()}
         onChange={(value) => setFlag(ctx, props.session, "input", value)}
       />
       <SwitchLine
         icon={<ReadAloudIcon />}
         label={ctx.t("pill.output")}
         checked={props.status.outputReady() ? flags().output : false}
-        disabled={!props.status.outputReady()}
+        disabled={!props.status.outputReady() || locked()}
         onChange={(value) => setFlag(ctx, props.session, "output", value)}
       />
       <SwitchLine
@@ -173,6 +175,20 @@ function VoicePopover(props: {
         disabled={!props.status.inputReady() || !props.status.outputReady()}
         onChange={(value) => setFlag(ctx, props.session, "conversation", value)}
       />
+
+      <Show when={locked()}>
+        <p
+          style={{
+            margin: "0",
+            padding: "0 8px 2px",
+            "font-size": "11.5px",
+            "line-height": "1.4",
+            opacity: "0.6",
+          }}
+        >
+          {ctx.t("pill.conversationLocked")}
+        </p>
+      </Show>
 
       <Divider />
 
