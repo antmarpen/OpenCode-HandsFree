@@ -12,6 +12,15 @@ const ENTITIES: Record<string, string> = {
 /** A line that separates the header of a table from its rows. */
 const TABLE_SEPARATOR = /^[ \t]*\|?[ \t]*:?-{3,}:?[ \t]*(\|[ \t]*:?-{3,}:?[ \t]*)+\|?[ \t]*$/
 
+/** A rule is structure on its own line: nothing to say about it. */
+const RULE = /^([-*_=])(?:[ \t]*\1){2,}$/
+
+/** A line that starts a new block instead of continuing the previous one. */
+const BLOCK_START = /^(?:#{1,6}[ \t]+|>[ \t]*|[-*+][ \t]+|\d+[.)][ \t]+)/
+
+/** Endings that already make the voice pause, so no period is needed. */
+const TERMINAL = /[.!?…:;,]$/
+
 /** A row of a table, with or without the outer pipes, as a sentence. */
 function tableRow(line: string): string {
   const cells = line
@@ -52,6 +61,37 @@ function readableTables(text: string): string {
   return out.join("\n")
 }
 
+/**
+ * Cuts the text into the blocks the author wrote: paragraphs, headings, list items,
+ * quotes and table rows. Each one is spoken as its own sentence, which is what gives
+ * the voice a place to breathe between them.
+ */
+function blocks(text: string): string[] {
+  const out: string[] = []
+  let current = ""
+
+  const flush = () => {
+    const value = current.trim()
+    if (value) out.push(value)
+    current = ""
+  }
+
+  for (const raw of text.split("\n")) {
+    const line = raw.trim()
+    if (!line || RULE.test(line)) {
+      flush()
+      continue
+    }
+    if (BLOCK_START.test(line)) flush()
+    // A trailing backslash is a hard break, not a word.
+    const bare = line.replace(/\\$/, "")
+    current = current ? `${current} ${bare}` : bare
+  }
+
+  flush()
+  return out
+}
+
 /** Speaking a URL is noise; keep only the punctuation that followed it. */
 function dropUrl(url: string): string {
   return /[.,;:!?]+$/.exec(url)?.[0] ?? ""
@@ -64,31 +104,15 @@ function collectLabels(text: string): Set<string> {
   return labels
 }
 
-/**
- * Turns an assistant message into something worth reading aloud: prose survives, its
- * Markdown does not, and the words inside inline code survive too, because file names
- * and identifiers are often the point of the sentence.
- */
-export function plainText(markdown: string): string {
-  const labels = collectLabels(markdown)
-  let text = markdown
-
-  // Fenced blocks are code, not prose.
-  text = text.replace(/```[\s\S]*?```/g, " ")
-  text = text.replace(/~~~[\s\S]*?~~~/g, " ")
-  // Indented blocks are code too, as long as they are not a list continuation.
-  text = text.replace(/^(?: {4,}|\t+)(?![ \t]*(?:[-*+]|\d+[.)])[ \t]).*$/gm, " ")
-
-  // Reference definitions and footnote bodies are metadata.
-  text = text.replace(/^[ \t]{0,3}\[[^\]]+\]:[ \t]*\S+.*$/gm, " ")
-  text = text.replace(/^[ \t]{0,3}\[\^[^\]]+\]:.*$/gm, " ")
+/** One block of Markdown, without its markup and with a period to close it. */
+function speakable(block: string, labels: Set<string>): string {
+  let text = block
 
   // Inline code keeps its content, without the backticks.
   text = text.replace(/`([^`\n]*)`/g, (_, code: string) => ` ${code} `)
 
   // An escaped character is that character: the backslash is markup.
   text = text.replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, "$1")
-  text = text.replace(/\\\n/g, " ")
 
   // Images disappear; links keep their text, with or without a reference.
   text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
@@ -99,13 +123,10 @@ export function plainText(markdown: string): string {
     labels.has(label) ? label : whole,
   )
 
-  text = readableTables(text)
-
-  // Rules, task boxes, headings, quotes and bullets are structure, not words.
-  text = text.replace(/^[ \t]*([-*_])(?:[ \t]*\1){2,}[ \t]*$/gm, " ")
-  text = text.replace(/^[ \t]*[-*+][ \t]+\[[ xX]\][ \t]*/gm, "")
-  text = text.replace(/^[ \t]{0,3}(?:>[ \t]*)+/gm, "")
-  text = text.replace(/^[ \t]{0,3}(?:#{1,6}|[-*+]|\d+[.)])[ \t]+/gm, "")
+  // Task boxes, headings, quotes and bullets are structure, not words.
+  text = text.replace(/^[ \t]{0,3}[-*+][ \t]+\[[ xX]\][ \t]*/, "")
+  text = text.replace(/^[ \t]{0,3}(?:>[ \t]*)+/, "")
+  text = text.replace(/^[ \t]{0,3}(?:#{1,6}|[-*+]|\d+[.)])[ \t]+/, "")
 
   // Formulas are not prose; a price like "$5 y $10" has no symbols to go by.
   text = text.replace(/\$\$[\s\S]*?\$\$/g, " ")
@@ -140,8 +161,35 @@ export function plainText(markdown: string): string {
 
   // Markup that disappeared leaves spaces where punctuation should touch the word.
   text = text.replace(/[ \t]+([.,;:!?…%])/g, "$1")
-  text = text.replace(/\s+/g, " ")
-  return text.trim()
+  text = text.replace(/\s+/g, " ").trim()
+
+  if (!text) return ""
+  return TERMINAL.test(text) ? text : `${text}.`
+}
+
+/**
+ * Turns an assistant message into something worth reading aloud: prose survives, its
+ * Markdown does not, and the words inside inline code survive too, because file names
+ * and identifiers are often the point of the sentence.
+ */
+export function plainText(markdown: string): string {
+  const labels = collectLabels(markdown)
+  let text = markdown
+
+  // Fenced blocks are code, not prose.
+  text = text.replace(/```[\s\S]*?```/g, "\n")
+  text = text.replace(/~~~[\s\S]*?~~~/g, "\n")
+  // Indented blocks are code too, as long as they are not a list continuation.
+  text = text.replace(/^(?: {4,}|\t+)(?![ \t]*(?:[-*+]|\d+[.)])[ \t]).*$/gm, "")
+
+  // Reference definitions and footnote bodies are metadata.
+  text = text.replace(/^[ \t]{0,3}\[[^\]]+\]:[ \t]*\S+.*$/gm, "")
+  text = text.replace(/^[ \t]{0,3}\[\^[^\]]+\]:.*$/gm, "")
+
+  return blocks(readableTables(text))
+    .map((block) => speakable(block, labels))
+    .filter(Boolean)
+    .join(" ")
 }
 
 /** Splits text on sentence boundaries, merging until each part fits `max` characters. */
