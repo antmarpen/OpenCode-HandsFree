@@ -111,24 +111,15 @@ function readableUrl(value: string): string {
     .trim()
 }
 
-/** Labels of the `[label]: url` lines, with the address each one points at. */
-function collectReferences(text: string): Map<string, string> {
-  const references = new Map<string, string>()
-  for (const match of text.matchAll(/^[ \t]{0,3}\[([^\]]+)\]:[ \t]*(\S+)/gm)) {
-    references.set(match[1], match[2])
-  }
-  return references
-}
-
-/** Link text plus the address it points at, unless the text already says it. */
-function labelled(label: string, url: string): string {
-  const address = readableUrl(url)
-  if (!address || label === url || label.includes(address)) return label
-  return `${label}, ${address}`
+/** Labels of the `[label]: url` lines, so shortcut references lose their brackets. */
+function collectLabels(text: string): Set<string> {
+  const labels = new Set<string>()
+  for (const match of text.matchAll(/^[ \t]{0,3}\[([^\]]+)\]:[ \t]*\S+/gm)) labels.add(match[1])
+  return labels
 }
 
 /** One block of Markdown, without its markup and with a period to close it. */
-function speakable(block: string, references: Map<string, string>): string {
+function speakable(block: string, labels: Set<string>): string {
   let text = block
 
   // Inline code keeps its content, without the backticks.
@@ -137,19 +128,14 @@ function speakable(block: string, references: Map<string, string>): string {
   // An escaped character is that character: the backslash is markup.
   text = text.replace(/\\([\\`*_{}[\]()#+\-.!>~|])/g, "$1")
 
-  // Images disappear; links keep their text and then say where they point.
+  // Images disappear; link text stays, and only explicit addresses are read out.
   text = text.replace(/!\[[^\]]*\]\([^)]*\)/g, " ")
   text = text.replace(/!\[[^\]]*\]\[[^\]]*\]/g, " ")
-  text = text.replace(/\[([^\]]+)\]\(([^)\s]+)[^)]*\)/g, (_, label: string, url: string) =>
-    labelled(label, url),
+  text = text.replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+  text = text.replace(/\[([^\]]+)\]\[[^\]]*\]/g, "$1")
+  text = text.replace(/\[([^\]^]+)\](?![([])/g, (whole, label: string) =>
+    labels.has(label) ? label : whole,
   )
-  text = text.replace(/\[([^\]]+)\]\[([^\]]*)\]/g, (_, label: string, key: string) =>
-    labelled(label, references.get(key || label) ?? ""),
-  )
-  text = text.replace(/\[([^\]^]+)\](?![([])/g, (whole, label: string) => {
-    const url = references.get(label)
-    return url ? labelled(label, url) : whole
-  })
 
   // Task boxes, headings, quotes and bullets are structure, not words.
   text = text.replace(/^[ \t]{0,3}[-*+][ \t]+\[[ xX]\][ \t]*/, "")
@@ -205,7 +191,7 @@ function speakable(block: string, references: Map<string, string>): string {
  * and identifiers are often the point of the sentence.
  */
 export function plainText(markdown: string): string {
-  const references = collectReferences(markdown)
+  const labels = collectLabels(markdown)
   let text = markdown
 
   // Fenced blocks are code, not prose.
@@ -219,7 +205,7 @@ export function plainText(markdown: string): string {
   text = text.replace(/^[ \t]{0,3}\[\^[^\]]+\]:.*$/gm, "")
 
   return blocks(readableTables(text))
-    .map((block) => speakable(block, references))
+    .map((block) => speakable(block, labels))
     .filter(Boolean)
     .join(" ")
 }
