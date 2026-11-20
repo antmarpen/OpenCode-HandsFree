@@ -31,7 +31,7 @@ const VOICE_LEVEL = 0.22
  * gaps forgiven, before the playback stops.
  */
 const BARGE_LEVEL = 0.26
-const BARGE_MS = 400
+const BARGE_MS = 900
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
 /** Audio kept before the detected onset, so the first syllable keeps its attack. */
