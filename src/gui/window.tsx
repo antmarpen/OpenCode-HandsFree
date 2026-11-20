@@ -14,7 +14,6 @@ import { registerPill } from "./window/pill"
 import { subscribeReplies } from "./window/replies"
 import { registerSettingsPage } from "./window/settings-page"
 import { getSpeech } from "./window/speech"
-import { probePlayback } from "./window/voice-log"
 import { registerStopPill } from "./window/stop-pill"
 
 /**
@@ -35,7 +34,6 @@ export const setup: Plugin.Setup<typeof definition> = (ctx) => {
   }
 
   subscribeReplies(ctx, speech.speak)
-  probePlayback(dictation, speech, conversation)
   registerCommands(ctx, dictation, status, stop)
   registerEscape(dictation, conversation)
   registerPill(ctx, dictation, status, speech, stop, conversation)

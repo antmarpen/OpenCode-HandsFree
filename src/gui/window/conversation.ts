@@ -203,7 +203,6 @@ export function createConversation(
           if (now - bargeSince >= BARGE_MS) {
             // Talking over the reply cuts it and starts the turn from this point. The
             // silence that follows sends it, without waiting for the reply to finish.
-            console.warn("voice: barge", { level: Number(level.toFixed(2)) })
             speech.cancel()
             void ctx.main(Voice).stop().catch(() => {})
             dictation.reset()
