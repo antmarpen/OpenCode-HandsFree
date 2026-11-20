@@ -187,16 +187,25 @@ export function registerPill(
     onCleanup(() => clearInterval(timer))
   })
 
+  /**
+   * True while a reply is read aloud and the capsule should offer the stop glyph: a
+   * manual recording keeps its cancel glyph, but a conversation records in the background
+   * (only a pre-roll) and must still let the user hush the voice.
+   */
+  const reading = () =>
+    speech.speaking() &&
+    !dictation.working() &&
+    (!dictation.recording() || conversation.running())
+
   // Reruns with every captured level, so the mask follows the microphone.
   ctx.add(Style, () => {
     const recording = dictation.recording()
     const working = dictation.working()
     const running = conversation.running()
     const armed = conversation.armed()
-    // A reply being read leaves the capsule open, also while the mode waits to be pressed.
-    const reading = speech.speaking() && !recording && !working && !running
+    const hush = reading()
 
-    if (!recording && !working && !running && !reading) {
+    if (!recording && !working && !running && !hush) {
       return `${BASE_RULES}\n${compactRule(armed ? CONVERSATION_MASK : MIC_MASK)}`
     }
 
@@ -205,22 +214,28 @@ export function registerPill(
     // there was voice in the last second, and never while the reply's own audio plays.
     const audible = levels.slice(-12).some((level) => level > 0.15)
     const wave = recording && (!running || (audible && !speech.speaking())) ? waveMask(levels) : ""
-    const icon = working ? workingMask(frame()) : armed ? CONVERSATION_MASK : MIC_MASK
+    // The conversation keeps its own glyph while the loop runs, so it never looks like
+    // plain dictation; only a manual recording wears the microphone.
+    const icon = working
+      ? workingMask(frame())
+      : armed || running
+        ? CONVERSATION_MASK
+        : MIC_MASK
     const iconColor = working
       ? "var(--color-v2-state-fg-warning, currentColor)"
       : "currentColor"
-    const action = reading ? STOP_MASK : CANCEL_MASK
+    const action = hush ? STOP_MASK : CANCEL_MASK
 
     return `${BASE_RULES}\n${activeRule(icon, iconColor, wave, action)}`
   })
 
   /** Whether the end of the capsule currently has something to do. */
-  const hasAction = () => conversation.running() || dictation.active() || speech.speaking()
+  const hasAction = () => reading() || conversation.running() || dictation.active()
 
   const action = () => {
-    if (conversation.running()) conversation.stop()
+    if (reading()) stop()
+    else if (conversation.running()) conversation.stop()
     else if (dictation.recording() || dictation.working()) dictation.cancel()
-    else if (speech.speaking()) stop()
   }
 
   // The action glyph shares the capsule with the toggle, so it needs its own click zone:
@@ -265,7 +280,8 @@ export function registerPill(
                 : ctx.t("pill.dictate")
         }${MARK}`,
         run: () => {
-          if (conversation.armed()) conversation.start()
+          if (conversation.running()) conversation.stop()
+          else if (conversation.armed()) conversation.start()
           else void dictation.toggle()
         },
       }
