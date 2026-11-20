@@ -30,8 +30,6 @@ const VOICE_LEVEL = 0.22
  */
 const BARGE_MS = 600
 const BARGE_QUIET_MS = 1500
-/** Silence after which the reply gets its volume back. */
-const BARGE_RESTORE_MS = 700
 /** A reply that ends while the user is still talking keeps the turn. */
 const VOICE_HOLD_MS = 600
 /** The first moments of a reply are its own onset reaching the microphone. */
@@ -69,8 +67,6 @@ export function createConversation(
   let playSince = 0
   /** Voiced time accumulated during this playback, across the pauses between words. */
   let voiceMs = 0
-  /** The reply is quietened while the user talks over it. */
-  let ducked = false
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -126,7 +122,6 @@ export function createConversation(
     owner = undefined
     heard = false
     voiceMs = 0
-    ducked = false
     nextListenAt = 0
     setRunning(true)
     setPhase("listening")
@@ -140,7 +135,6 @@ export function createConversation(
     owner = undefined
     heard = false
     voiceMs = 0
-    ducked = false
     dictation.cancel()
     speech.cancel()
     void ctx.main(Voice).stop().catch(() => {})
@@ -209,8 +203,6 @@ export function createConversation(
       // turn that started over it.
       if (!heard || now - lastVoice > VOICE_HOLD_MS) dictation.reset()
       voiceMs = 0
-      ducked = false
-      speech.restore()
     }
     if (playing && !wasPlaying) {
       playSince = now
@@ -234,19 +226,7 @@ export function createConversation(
       lastVoice = now
     }
 
-    if (playing && voiced) {
-      voiceMs += TICK_MS
-      // The reply quiets down at the first sound, so its own audio never covers the first
-      // word; a burst like a cough brings it back as soon as the sound stops.
-      if (!ducked) {
-        ducked = true
-        speech.duck()
-      }
-    } else if (ducked && now - lastVoice > BARGE_RESTORE_MS) {
-      // The voice stopped: the reply returns to its volume right away.
-      ducked = false
-      speech.restore()
-    }
+    if (playing && voiced) voiceMs += TICK_MS
 
     if (!playing || now - lastVoice > BARGE_QUIET_MS) voiceMs = 0
 
@@ -254,7 +234,6 @@ export function createConversation(
       // The voice has lasted over the reply: stop it here and keep recording the turn.
       speech.cancel()
       void ctx.main(Voice).stop().catch(() => {})
-      ducked = false
       voiceMs = 0
       playSince = 0
       // The utterance just started must not be dropped as leftover reply audio.
