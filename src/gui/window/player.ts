@@ -4,6 +4,8 @@ export interface Player {
   /** Plays one encoded chunk; resolves when it ends, fails or is stopped. */
   play(audio: string, mime: string, deviceId: string): Promise<void>
   stop(): void
+  /** Volume of the chunk in flight, from 0 to 1; a new chunk starts at full volume. */
+  setVolume(value: number): void
 }
 
 /**
@@ -12,6 +14,7 @@ export interface Player {
  */
 export function createPlayer(): Player {
   let stopCurrent: (() => void) | undefined
+  let mediaInFlight: HTMLAudioElement | undefined
 
   const play = (audio: string, mime: string, deviceId: string) =>
     new Promise<void>((resolve, reject) => {
@@ -31,6 +34,7 @@ export function createPlayer(): Player {
         if (settled) return
         settled = true
         if (stopCurrent === stop) stopCurrent = undefined
+        if (mediaInFlight === media) mediaInFlight = undefined
 
         media.onended = null
         media.onerror = null
@@ -44,6 +48,7 @@ export function createPlayer(): Player {
       }
 
       stopCurrent = stop
+      mediaInFlight = media
       media.onended = () => finish()
       media.onerror = () => finish(new Error("The audio could not be played"))
 
@@ -58,5 +63,8 @@ export function createPlayer(): Player {
   return {
     play,
     stop: () => stopCurrent?.(),
+    setVolume: (value) => {
+      if (mediaInFlight) mediaInFlight.volume = Math.max(0, Math.min(1, value))
+    },
   }
 }

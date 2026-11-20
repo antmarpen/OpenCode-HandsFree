@@ -12,11 +12,18 @@ export interface Speech {
   readonly speak: Speak
   /** True while a reply is being synthesized or played, for the stop pill. */
   readonly speaking: () => boolean
+  /** Lowers the reply while the user talks, so the microphone hears only them. */
+  duck(): void
+  /** Puts the reply back to its volume, when the sound was a cough. */
+  restore(): void
   cancel(): void
 }
 
 /** Characters per spoken chunk: short enough to stop quickly, long enough to sound natural. */
 const CHUNK_SIZE = 600
+
+/** How quiet the reply gets while the user is talking over it. */
+const DUCKED_VOLUME = 0.1
 
 /**
  * Speaks text chunks one after another. The main process synthesizes each chunk and
@@ -104,7 +111,13 @@ export function createSpeech(ctx: Ctx): Speech {
     setSpeaking(false)
   }
 
-  return { speak, speaking, cancel }
+  return {
+    speak,
+    speaking,
+    duck: () => player.setVolume(DUCKED_VOLUME),
+    restore: () => player.setVolume(1),
+    cancel,
+  }
 }
 
 let shared: Speech | undefined
