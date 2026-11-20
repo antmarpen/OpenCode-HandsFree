@@ -21,18 +21,21 @@ export interface Conversation {
 }
 
 /** How often the driver reads the microphone level. */
-const TICK_MS = 60
+const TICK_MS = 40
 /** Level that counts as voice while nothing is playing. */
 const VOICE_LEVEL = 0.22
 /**
  * While a reply is read, the microphone also hears it, so ask for a little more level
- * and for a longer moment than a normal turn. Two ticks is enough to tell a voice from
- * a noise; the user feels anything longer as a lag before the reply stops.
+ * than a normal turn. Any longer window is felt as a lag before the reply stops.
  */
-const BARGE_LEVEL = 0.3
-const BARGE_MS = 100
+const BARGE_LEVEL = 0.26
+const BARGE_MS = 80
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
+/** Audio kept before the detected onset, so the first syllable keeps its attack. */
+const BARGE_MARGIN_S = 0.2
+/** Shortest turn a barge may keep, so a soft first word is not cut. */
+const BARGE_MIN_S = 0.5
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -60,6 +63,8 @@ export function createConversation(
   let wasPlaying = false
   /** When the reply being read started playing, so its own onset is not a barge. */
   let playSince = 0
+  /** First moment of this playback where the microphone went over the voice level. */
+  let voiceSince = 0
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -113,6 +118,7 @@ export function createConversation(
     owner = undefined
     heard = false
     bargeSince = 0
+    voiceSince = 0
     nextListenAt = 0
     setRunning(true)
     setPhase("listening")
@@ -126,6 +132,7 @@ export function createConversation(
     owner = undefined
     heard = false
     bargeSince = 0
+    voiceSince = 0
     dictation.cancel()
     speech.cancel()
     void ctx.main(Voice).stop().catch(() => {})
@@ -190,8 +197,14 @@ export function createConversation(
     const playing = speech.speaking()
 
     // A reply leaves its own audio in the pre-roll; drop it as soon as the audio ends.
-    if (wasPlaying && !playing) dictation.reset()
-    if (playing && !wasPlaying) playSince = now
+    if (wasPlaying && !playing) {
+      dictation.reset()
+      voiceSince = 0
+    }
+    if (playing && !wasPlaying) {
+      playSince = now
+      voiceSince = 0
+    }
     wasPlaying = playing
 
     const level = dictation.levels().at(-1) ?? 0
@@ -200,17 +213,19 @@ export function createConversation(
       if (playing) {
         // Ignore the beginning of the reply, where its own onset is the loudest.
         if (now - playSince >= BARGE_GUARD_MS) {
+          if (!voiceSince) voiceSince = now
           if (!bargeSince) bargeSince = now
           if (now - bargeSince >= BARGE_MS) {
-            // Talking over the reply cuts it and starts the turn from what the microphone
-            // already held: the words said while the level was still rising are kept.
+            // Talking over the reply cuts it and starts the turn at the syllable that
+            // triggered the barge: the reply's own tail is dropped, the first word stays.
             speech.cancel()
             void ctx.main(Voice).stop().catch(() => {})
-            dictation.begin()
+            dictation.trim(Math.max(BARGE_MIN_S, (now - voiceSince) / 1000 + BARGE_MARGIN_S))
             heard = true
             lastVoice = now
             bargeSince = 0
             playSince = 0
+            voiceSince = 0
             // The utterance just started must not be dropped as leftover reply audio.
             wasPlaying = false
           }
