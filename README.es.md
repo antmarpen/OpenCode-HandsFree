@@ -24,9 +24,21 @@ Voz bidireccional manos libres para **OpenCode Desktop**.
 - **Lectura local** (opcional): voces SAPI en Windows, `say` en macOS, `espeak-ng` en Linux.
 - **Nube** (opcional): cualquier proveedor que implemente el contrato de OpenAI `/audio/transcriptions` y `/audio/speech`.
 
-## Instalación y activación
+## Cómo funciona
 
-Instala el paquete publicado con la CLI de OpenCode:
+1. La ventana graba el micrófono y codifica en memoria un WAV mono de 16 kHz.
+2. El proceso principal lo transcribe con el ejecutable local o con el proveedor configurado y devuelve el texto.
+3. El texto va al compositor del chat o se envía como prompt si `autoSend` está activo.
+4. Cuando el asistente termina un bloque de texto, el plugin lo sintetiza con la voz local o el TTS en la nube y lo reproduce en la ventana, para poder elegir el dispositivo de salida.
+5. El modo conversación encadena esos pasos: escucha, cierra el turno al detectar silencio, envía el prompt, lee la respuesta y vuelve a escuchar.
+
+Las claves y las credenciales del proveedor se quedan en el proceso principal. La ventana solo envía texto y audio en base64, y el audio se borra de la carpeta temporal después de cada petición.
+
+## Instalación
+
+### Desde npm (recomendado)
+
+El paquete publicado incluye el bundle GUI ya construido, así que no hay que compilar nada en tu máquina.
 
 ```sh
 opencode plugin add opencode-handsfree
@@ -41,9 +53,9 @@ O añádelo al array `plugins` de tu `opencode.jsonc` **global** (normalmente `%
 }
 ```
 
-Fija una versión con `opencode-handsfree@0.1.0`. El host descarga el paquete, incluido el bundle GUI ya construido, así que no hay que compilar nada en local. Reinicia OpenCode Desktop tras la primera instalación.
+Fija una versión con `opencode-handsfree@0.1.0`. Reinicia OpenCode Desktop tras la primera instalación.
 
-### Desde un clon local
+### Desde el código fuente
 
 Para desarrollar, clona el repositorio, instala dependencias y compila una vez, y apunta `plugins` a la ruta absoluta:
 

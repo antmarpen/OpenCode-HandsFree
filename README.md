@@ -24,9 +24,21 @@ Hands-free bidirectional voice for **OpenCode Desktop**.
 - **Local replies** (optional): SAPI voices on Windows, `say` on macOS, `espeak-ng` on Linux.
 - **Cloud** (optional): any provider that implements the OpenAI `/audio/transcriptions` and `/audio/speech` contract.
 
-## Install and enable
+## How it works
 
-Install the published package with the OpenCode CLI:
+1. The window records the microphone and encodes a 16 kHz mono WAV in memory.
+2. The main process transcribes it with the local CLI or the configured provider and returns the text.
+3. The text goes to the chat composer, or is sent as a prompt when auto-send is on.
+4. When the assistant finishes a text block, the plugin synthesizes it with the local voice or cloud TTS and plays it in the window, so the output device can be chosen.
+5. Conversation mode chains those steps: it listens, closes the turn on silence, sends the prompt, reads the reply and listens again.
+
+API keys and provider credentials stay in the main process. The window only sends text and base64 audio, and the audio is removed from the temporary folder after each request.
+
+## Install
+
+### From npm (recommended)
+
+The published package ships the GUI bundle prebuilt, so nothing is compiled on your machine.
 
 ```sh
 opencode plugin add opencode-handsfree
@@ -41,9 +53,9 @@ Or add it to the `plugins` array of your **global** `opencode.jsonc` (usually `%
 }
 ```
 
-Pin a version with `opencode-handsfree@0.1.0`. The host downloads the package, including its prebuilt GUI bundle, so nothing is compiled locally. Restart OpenCode Desktop after the first install.
+Pin a version with `opencode-handsfree@0.1.0`. Restart OpenCode Desktop after the first install.
 
-### From a local checkout
+### From source
 
 For development, clone the repository, install dependencies and build once, then point `plugins` at the absolute path:
 

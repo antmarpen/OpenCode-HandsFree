@@ -41,6 +41,17 @@ Read [`AGENTS.md`](./AGENTS.md). The short version:
 - Say what changed and how you verified it; UI changes deserve a screenshot.
 - New features are welcome if they stay within the plugin's scope: voice in, voice out, and the hands-free loop.
 
+## Releasing
+
+The published package ships the GUI bundle already built: `prepack` runs `npm run build`, and `files` includes `dist`.
+
+```sh
+npm version patch   # or minor / major
+npm publish         # public unscoped package
+```
+
+After publishing, check that a clean install works with `opencode plugin add opencode-handsfree@<version>` before announcing it.
+
 ## Security
 
 Do not paste API keys, tokens or personal paths in issues or pull requests. See [`SECURITY.md`](./SECURITY.md) for private reporting.
