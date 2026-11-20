@@ -59,6 +59,12 @@ const SETTINGS_STYLE = `
   font-size: 11.5px;
   line-height: 1.4;
   color: var(--v2-text-text-muted, inherit);
+}
+.opencode-voice-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+  width: 100%;
 }`
 
 /** Settings > Voice: engines, endpoints, keys, defaults and a test button. */

@@ -17,6 +17,7 @@ export function VoiceSettings() {
     <ctx.ui.SettingsLayout title={ctx.t("settings.title")} description={ctx.t("settings.description")}>
       <VoiceTabs value={tab()} onChange={setTab} />
       <div
+        class="opencode-voice-panel"
         role="tabpanel"
         id={`voice-panel-${tab()}`}
         aria-labelledby={`voice-tab-${tab()}`}
