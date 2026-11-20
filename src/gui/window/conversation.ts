@@ -33,11 +33,6 @@ const BARGE_LEVEL = 0.3
 const BARGE_MS = 160
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
-/**
- * Audio kept from before the barge, so the syllable that triggered it is not lost: the
- * microphone was already recording, it was only being held in the pre-roll.
- */
-const BARGE_PREROLL_S = 0.4
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -207,11 +202,11 @@ export function createConversation(
         if (now - playSince >= BARGE_GUARD_MS) {
           if (!bargeSince) bargeSince = now
           if (now - bargeSince >= BARGE_MS) {
-            // Talking over the reply cuts it and starts the turn from this point, keeping
-            // the last moments of the microphone so the first syllable survives.
+            // Talking over the reply cuts it and starts the turn from what the microphone
+            // already held: the words said while the level was still rising are kept.
             speech.cancel()
             void ctx.main(Voice).stop().catch(() => {})
-            dictation.trim(BARGE_PREROLL_S)
+            dictation.begin()
             heard = true
             lastVoice = now
             bargeSince = 0
