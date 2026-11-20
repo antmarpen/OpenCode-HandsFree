@@ -5,10 +5,18 @@ coverage/
 *.log
 *.tsbuildinfo
 *.local
+*.tmp
+*.bak
+*.orig
+*.rej
 
 .env
 .env.*
 !.env.example
+.npmrc
+
+*.pem
+*.key
 
 .DS_Store
 Thumbs.db
@@ -16,3 +24,8 @@ desktop.ini
 
 .vscode/
 .idea/
+.cache/
+
+.agents/
+.claude/
+CLAUDE.md
