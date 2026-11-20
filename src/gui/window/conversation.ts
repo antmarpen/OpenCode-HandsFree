@@ -37,9 +37,9 @@ const BARGE_GAP_MS = 250
 const BARGE_GUARD_MS = 250
 /**
  * Audio kept when the first sound of a turn is detected: it reaches back into the syllable
- * that woke the detector, so the recording starts at the user's first word.
+ * that woke the detector, without dragging in the reply that was playing.
  */
-const BARGE_ONSET_S = 0.6
+const BARGE_ONSET_S = 0.25
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -224,15 +224,19 @@ export function createConversation(
 
       if (voiced) {
         if (!voiceSince) {
-          // The first sound of the turn: keep it from here on, so nothing said while the
-          // interruption is being confirmed can be lost.
+          // The first sound of the turn: hush the reply at once, because its own audio
+          // would otherwise cover the first words in the recording, and keep the syllable
+          // that woke the detector.
           voiceSince = now
+          speech.hold()
           dictation.trim(BARGE_ONSET_S)
         }
         voiceEnd = now
       } else if (voiceSince && now - voiceEnd > BARGE_GAP_MS) {
-        // A burst that stopped: a cough, not a turn. Back to holding, ready for the next.
+        // A burst that stopped: a cough, not a turn. Let the reply go on from where it
+        // was and go back to holding, ready for the next sound.
         voiceSince = 0
+        speech.release()
         dictation.reset()
       }
 
