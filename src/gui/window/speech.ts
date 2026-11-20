@@ -22,8 +22,8 @@ export interface Speech {
 /** Characters per spoken chunk: short enough to stop quickly, long enough to sound natural. */
 const CHUNK_SIZE = 600
 
-/** How quiet the reply gets while the user is talking over it. */
-const DUCKED_VOLUME = 0.1
+/** How quiet the reply gets while the user is talking over it: audible, but not covering. */
+const DUCKED_VOLUME = 0.3
 
 /**
  * Speaks text chunks one after another. The main process synthesizes each chunk and
