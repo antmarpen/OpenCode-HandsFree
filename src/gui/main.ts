@@ -11,8 +11,8 @@ import { createTranscriber } from "./main/transcribe"
 import { safeURL } from "./main/urls"
 import { listVoices } from "./main/voices"
 
-/** Bump when the Ipc surface changes; it is logged so a stale main process is visible. */
-const MAIN_VERSION = 6
+/** Bump when the Ipc surface or the main bundle behavior changes; it is logged so a stale main process is visible. */
+const MAIN_VERSION = 7
 
 /**
  * Main-process setup: compose the audio modules and expose them to every window
