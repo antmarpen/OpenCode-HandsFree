@@ -3,7 +3,7 @@
 ## Language
 
 - All code, identifiers, comments, commit messages, documentation and file names are written in **English**.
-- Chat replies to the user are written in **the user's language** (currently Spanish). Do not translate code to match the chat language.
+- A chat reply may follow the language the user writes in; documentation and commit history stay English.
 
 ## What this project is
 

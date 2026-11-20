@@ -25,7 +25,3 @@ desktop.ini
 .vscode/
 .idea/
 .cache/
-
-.agents/
-.claude/
-CLAUDE.md
