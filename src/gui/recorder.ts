@@ -34,8 +34,12 @@ export interface RecordingOptions {
 }
 
 const TARGET_RATE = 16_000
-/** Audio kept while waiting for speech, so the first word is not cut. */
-const PRE_ROLL_SECONDS = 1.2
+/**
+ * Audio kept while waiting for speech. Generous on purpose: the interruption is confirmed
+ * a second or more after the user starts talking, and the turn has to reach back to the
+ * first word.
+ */
+const PRE_ROLL_SECONDS = 3
 
 /**
  * Records the microphone in the renderer and returns a 16 kHz mono WAV, which both

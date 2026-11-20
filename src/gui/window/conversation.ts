@@ -27,11 +27,12 @@ const VOICE_LEVEL = 0.22
 /**
  * While a reply is read, the microphone also hears it, so ask for a little more level
  * than a normal turn. The cut waits for the sound to last, because a cough or a knock
- * must not silence the reply: the voice has to keep going for this long, with short
- * gaps forgiven, before the playback stops.
+ * must not silence the reply: the voice has to keep going for this long, and a pause
+ * longer than the gap is the end of that sound, not a syllable.
  */
 const BARGE_LEVEL = 0.26
 const BARGE_MS = 900
+const BARGE_GAP_MS = 250
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
 /** Audio kept before the detected onset, so the first syllable keeps its attack. */
@@ -69,8 +70,8 @@ export function createConversation(
   let playSince = 0
   /** First moment of this playback where the microphone went over the voice level. */
   let voiceSince = 0
-  /** Voiced time accumulated during this playback, forgiving the gaps between words. */
-  let voiceMs = 0
+  /** Last moment of this playback where it was still over the level. */
+  let voiceEnd = 0
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -126,7 +127,7 @@ export function createConversation(
     owner = undefined
     heard = false
     voiceSince = 0
-    voiceMs = 0
+    voiceEnd = 0
     nextListenAt = 0
     setRunning(true)
     setPhase("listening")
@@ -140,7 +141,7 @@ export function createConversation(
     owner = undefined
     heard = false
     voiceSince = 0
-    voiceMs = 0
+    voiceEnd = 0
     dictation.cancel()
     speech.cancel()
     void ctx.main(Voice).stop().catch(() => {})
@@ -208,12 +209,12 @@ export function createConversation(
     if (wasPlaying && !playing) {
       dictation.reset()
       voiceSince = 0
-      voiceMs = 0
+      voiceEnd = 0
     }
     if (playing && !wasPlaying) {
       playSince = now
       voiceSince = 0
-      voiceMs = 0
+      voiceEnd = 0
     }
     wasPlaying = playing
 
@@ -222,14 +223,18 @@ export function createConversation(
     if (playing) {
       // The first moments of a reply are its own onset reaching the microphone.
       const voiced = level >= BARGE_LEVEL && now - playSince >= BARGE_GUARD_MS
-      if (voiced && !voiceSince) voiceSince = now
-      // A cough is a burst; a voice keeps going. Short gaps between words only slow the
-      // count down, so a single noise never adds up.
-      voiceMs = voiced ? voiceMs + TICK_MS : Math.max(0, voiceMs - TICK_MS)
 
-      if (voiceMs >= BARGE_MS) {
-        // Sustained voice over the reply: cut it and start the turn at the syllable that
-        // began it, dropping the reply's own tail but keeping the first word.
+      if (voiced) {
+        if (!voiceSince) voiceSince = now
+        voiceEnd = now
+      } else if (voiceSince && now - voiceEnd > BARGE_GAP_MS) {
+        // The sound stopped: a later noise starts the count over instead of adding to it.
+        voiceSince = 0
+      }
+
+      if (voiceSince && now - voiceSince >= BARGE_MS) {
+        // The user has been talking over the reply: cut it and start the turn at the
+        // syllable that began it, dropping the reply's own tail but keeping that word.
         speech.cancel()
         void ctx.main(Voice).stop().catch(() => {})
         dictation.trim(Math.max(BARGE_MIN_S, (now - voiceSince) / 1000 + BARGE_MARGIN_S))
@@ -237,7 +242,7 @@ export function createConversation(
         lastVoice = now
         playSince = 0
         voiceSince = 0
-        voiceMs = 0
+        voiceEnd = 0
         // The utterance just started must not be dropped as leftover reply audio.
         wasPlaying = false
       }
