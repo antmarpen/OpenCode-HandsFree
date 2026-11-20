@@ -1,0 +1,32 @@
+{
+  "name": "opencode-voice",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Bidirectional voice for OpenCode Desktop: dictation with Whisper and spoken agent replies.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./rpc": "./src/rpc.ts",
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "files": [
+    "src",
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "watch": "vite build --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opencode/plugin": "^2.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "electron": "^44.9.1",
+    "solid-js": "^1.9.9",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.7",
+    "vite-plugin-solid": "^2.11.10"
+  }
+}
