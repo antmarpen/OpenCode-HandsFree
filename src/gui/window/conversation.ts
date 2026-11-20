@@ -25,14 +25,13 @@ const TICK_MS = 40
 /** Level that counts as voice while nothing is playing. */
 const VOICE_LEVEL = 0.22
 /**
- * While a reply is read, the microphone also hears it, so ask for a little more level
- * than a normal turn. The cut waits for the sound to last, because a cough or a knock
- * must not silence the reply: the voice has to keep going for this long, and a pause
- * longer than the gap is the end of that sound, not a syllable.
+ * A reply is not interrupted by any sound: the voice has to add up to this much, and a
+ * quiet spell longer than the threshold is what ends the sound instead of a syllable gap.
  */
-const BARGE_LEVEL = 0.26
 const BARGE_MS = 600
-const BARGE_GAP_MS = 250
+const BARGE_QUIET_MS = 1500
+/** A reply that ends while the user is still talking keeps the turn. */
+const VOICE_HOLD_MS = 600
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
 /**
@@ -64,12 +63,12 @@ export function createConversation(
   let lastVoice = 0
   let suspended = false
   let wasPlaying = false
-  /** When the reply being read started playing, so its own onset is not a barge. */
+  /** When the reply being read started playing, so its own onset is not a voice. */
   let playSince = 0
-  /** First moment of this playback where the microphone went over the voice level. */
-  let voiceSince = 0
-  /** Last moment of this playback where it was still over the level. */
-  let voiceEnd = 0
+  /** Voiced time accumulated during this playback, across the pauses between words. */
+  let voiceMs = 0
+  /** The reply is quietened while the user talks over it. */
+  let ducked = false
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -124,8 +123,8 @@ export function createConversation(
     runOwner = routed()?.key
     owner = undefined
     heard = false
-    voiceSince = 0
-    voiceEnd = 0
+    voiceMs = 0
+    ducked = false
     nextListenAt = 0
     setRunning(true)
     setPhase("listening")
@@ -138,8 +137,8 @@ export function createConversation(
     runOwner = undefined
     owner = undefined
     heard = false
-    voiceSince = 0
-    voiceEnd = 0
+    voiceMs = 0
+    ducked = false
     dictation.cancel()
     speech.cancel()
     void ctx.main(Voice).stop().catch(() => {})
@@ -203,60 +202,59 @@ export function createConversation(
     const now = Date.now()
     const playing = speech.speaking()
 
-    // A reply leaves its own audio in the pre-roll; drop it as soon as the audio ends.
     if (wasPlaying && !playing) {
-      dictation.reset()
-      voiceSince = 0
-      voiceEnd = 0
+      // The reply ended on its own: drop its echo, unless the user is in the middle of a
+      // turn that started over it.
+      if (!heard || now - lastVoice > VOICE_HOLD_MS) dictation.reset()
+      voiceMs = 0
+      ducked = false
+      speech.restore()
     }
     if (playing && !wasPlaying) {
       playSince = now
-      voiceSince = 0
-      voiceEnd = 0
+      voiceMs = 0
     }
     wasPlaying = playing
 
     const level = dictation.levels().at(-1) ?? 0
+    // One detector for both cases: the same level starts a turn, whether a reply plays or
+    // not. Only the first moments of a reply are skipped, where its own onset is loudest.
+    const voiced = level >= VOICE_LEVEL && (!playing || now - playSince >= BARGE_GUARD_MS)
 
-    if (playing) {
-      // The first moments of a reply are its own onset reaching the microphone.
-      const voiced = level >= BARGE_LEVEL && now - playSince >= BARGE_GUARD_MS
-
-      if (voiced) {
-        if (!voiceSince) {
-          // The first sound of the turn starts the recording exactly as it would with no
-          // reply playing. The reply only drops its volume, so its own audio stops covering
-          // the first words without cutting it.
-          voiceSince = now
-          speech.duck()
-          dictation.trim(BARGE_ONSET_S)
-        }
-        voiceEnd = now
-      } else if (voiceSince && now - voiceEnd > BARGE_GAP_MS) {
-        // A burst that stopped: a cough, not a turn. The reply goes back to its volume and
-        // the microphone back to holding, ready for the next sound.
-        voiceSince = 0
-        speech.restore()
-        dictation.reset()
-      }
-
-      if (voiceSince && now - voiceSince >= BARGE_MS) {
-        // The user has been talking over the reply: silence it. The turn has been
-        // accumulating since its first sound, so it is complete already.
-        speech.cancel()
-        void ctx.main(Voice).stop().catch(() => {})
+    if (voiced) {
+      if (!heard) {
         heard = true
-        lastVoice = now
-        playSince = 0
-        voiceSince = 0
-        voiceEnd = 0
-        // The utterance just started must not be dropped as leftover reply audio.
-        wasPlaying = false
+        // A reply leaves its own audio in the pre-roll: keep only the syllable that woke
+        // the detector, so the turn does not drag the reply's voice along with it.
+        if (playing) dictation.trim(BARGE_ONSET_S)
+        else dictation.begin()
       }
-    } else if (level >= VOICE_LEVEL) {
-      if (!heard) dictation.begin()
-      heard = true
       lastVoice = now
+    }
+
+    if (playing && voiced) {
+      // Talking over the reply quiets it down, so its own audio stops covering the words.
+      if (!ducked) {
+        ducked = true
+        speech.duck()
+      }
+      voiceMs += TICK_MS
+    } else if (ducked && now - lastVoice > BARGE_QUIET_MS) {
+      // A burst that stopped: a cough, not a turn. The reply gets its volume back.
+      ducked = false
+      speech.restore()
+      voiceMs = 0
+    }
+
+    if (playing && voiceMs >= BARGE_MS) {
+      // The voice has lasted over the reply: stop it here and keep recording the turn.
+      speech.cancel()
+      void ctx.main(Voice).stop().catch(() => {})
+      ducked = false
+      voiceMs = 0
+      playSince = 0
+      // The utterance just started must not be dropped as leftover reply audio.
+      wasPlaying = false
     }
 
     if (!playing && heard && now - lastVoice >= silence()) {
