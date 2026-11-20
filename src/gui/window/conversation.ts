@@ -30,8 +30,6 @@ const VOICE_LEVEL = 0.22
  */
 const BARGE_MS = 600
 const BARGE_QUIET_MS = 1500
-/** Voice needed before the reply is quietened, so a single noise does not dip it. */
-const BARGE_DUCK_MS = 80
 /** Silence after which the reply gets its volume back. */
 const BARGE_RESTORE_MS = 700
 /** A reply that ends while the user is still talking keeps the turn. */
@@ -42,7 +40,7 @@ const BARGE_GUARD_MS = 250
  * Audio kept when the first sound of a turn is detected: it reaches back into the syllable
  * that woke the detector, without dragging in the reply that was playing.
  */
-const BARGE_ONSET_S = 0.25
+const BARGE_ONSET_S = 0.45
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -238,9 +236,9 @@ export function createConversation(
 
     if (playing && voiced) {
       voiceMs += TICK_MS
-      // Only a voice that lasts quiets the reply: a click or a cough is over by then, and
-      // the reply stays audible instead of dipping at every noise.
-      if (!ducked && voiceMs >= BARGE_DUCK_MS) {
+      // The reply quiets down at the first sound, so its own audio never covers the first
+      // word; a burst like a cough brings it back as soon as the sound stops.
+      if (!ducked) {
         ducked = true
         speech.duck()
       }
