@@ -23,6 +23,9 @@ export function createTranscriber(credentials: Credentials, log: Log): Transcrib
     const audio = new Uint8Array(Buffer.from(input.audio, "base64"))
     if (audio.byteLength === 0) throw new Error("The recording is empty")
 
+    // 16 kHz mono 16-bit after the recorder's conversion, minus the WAV header.
+    log.write("info", "voice: clip", { seconds: Math.max(0, (audio.byteLength - 44) / 32_000) })
+
     try {
       let text: string
       if (input.engine === "local") {
