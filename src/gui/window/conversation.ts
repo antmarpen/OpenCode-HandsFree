@@ -24,9 +24,14 @@ export interface Conversation {
 const TICK_MS = 80
 /** Level that counts as voice while nothing is playing. */
 const VOICE_LEVEL = 0.22
-/** While a reply is read, the microphone also hears it: ask for more and for longer. */
-const BARGE_LEVEL = 0.45
+/**
+ * While a reply is read, the microphone also hears it, so ask for a little more level
+ * and for a longer moment than a normal turn.
+ */
+const BARGE_LEVEL = 0.3
 const BARGE_MS = 260
+/** The first moments of a reply are its own onset reaching the microphone. */
+const BARGE_GUARD_MS = 250
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -52,6 +57,12 @@ export function createConversation(
   let bargeSince = 0
   let suspended = false
   let wasPlaying = false
+  /** When the reply being read started playing, so its own onset is not a barge. */
+  let playSince = 0
+  /** Microphone peak while a reply plays, for tuning the barge threshold. */
+  let playPeak = 0
+  /** Milliseconds the microphone spent over the barge threshold during that reply. */
+  let aboveMs = 0
   /** Earliest retry after a failed start, so a denied microphone is not retried in a loop. */
   let nextListenAt = 0
 
@@ -182,23 +193,50 @@ export function createConversation(
     const playing = speech.speaking()
 
     // A reply leaves its own audio in the pre-roll; drop it as soon as the audio ends.
-    if (wasPlaying && !playing) dictation.reset()
+    if (wasPlaying && !playing) {
+      dictation.reset()
+      if (playPeak > 0) {
+        console.info("voice: reply mic", {
+          peak: Number(playPeak.toFixed(2)),
+          above: aboveMs,
+          bargeLevel: BARGE_LEVEL,
+        })
+      }
+    }
+    if (playing && !wasPlaying) {
+      playSince = now
+      playPeak = 0
+      aboveMs = 0
+    }
     wasPlaying = playing
 
     const level = dictation.levels().at(-1) ?? 0
 
+    if (playing) {
+      playPeak = Math.max(playPeak, level)
+      if (level >= BARGE_LEVEL) aboveMs += TICK_MS
+    }
+
     if (level >= (playing ? BARGE_LEVEL : VOICE_LEVEL)) {
       if (playing) {
-        if (!bargeSince) bargeSince = now
-        if (now - bargeSince >= BARGE_MS) {
-          // Talking over the reply cuts it and starts the turn from this point.
-          speech.cancel()
-          void ctx.main(Voice).stop().catch(() => {})
-          dictation.reset()
-          dictation.begin()
-          heard = true
-          lastVoice = now
-          bargeSince = 0
+        // Ignore the beginning of the reply, where its own onset is the loudest.
+        if (now - playSince >= BARGE_GUARD_MS) {
+          if (!bargeSince) bargeSince = now
+          if (now - bargeSince >= BARGE_MS) {
+            // Talking over the reply cuts it and starts the turn from this point. The
+            // silence that follows sends it, without waiting for the reply to finish.
+            console.info("voice: barge", { level: Number(level.toFixed(2)) })
+            speech.cancel()
+            void ctx.main(Voice).stop().catch(() => {})
+            dictation.reset()
+            dictation.begin()
+            heard = true
+            lastVoice = now
+            bargeSince = 0
+            playSince = 0
+            // The utterance just started must not be dropped as leftover reply audio.
+            wasPlaying = false
+          }
         }
       } else {
         if (!heard) dictation.begin()

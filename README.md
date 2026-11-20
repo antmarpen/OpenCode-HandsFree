@@ -4,7 +4,7 @@ Plugin de voz bidireccional para **OpenCode Desktop**:
 
 - **Dictado**: graba el micrófono, transcribe con whisper.cpp local o con un proveedor compatible con OpenAI (Whisper) y deja el texto en el prompt.
 - **Lectura**: al terminar cada bloque de texto del agente, lo lee en voz alta con la voz del sistema (SAPI en Windows) o con un TTS en la nube.
-- **Conversación (experimental)**: escucha sola, cierra el turno al detectar silencio, envía el mensaje y lee la respuesta, y vuelve a escuchar. Al activar el modo, la píldora del compositor cambia al icono de conversación; **al pulsarla empieza el ciclo** y, mientras dura, sigue con ese icono. Con una respuesta sonando, el extremo de la píldora muestra el stop y solo calla la voz; la ✕ (o Escape, o volver a pulsar la píldora) detiene el ciclo y deja el modo listo para volver a empezar.
+- **Conversación (experimental)**: escucha sola, cierra el turno al detectar silencio, envía el mensaje y lee la respuesta, y vuelve a escuchar. Al activar el modo, la píldora del compositor cambia al icono de conversación; **al pulsarla empieza el ciclo** y, mientras dura, sigue con ese icono. Si hablas mientras se lee la respuesta, la lectura se corta y tu turno se envía en cuanto callas. Con una respuesta sonando, el extremo de la píldora muestra el stop y solo calla la voz; la ✕ (o Escape, o volver a pulsar la píldora) detiene el ciclo y deja el modo listo para volver a empezar.
 - **Por chat**: cada sesión tiene su propio interruptor de entrada y salida, persistente. Los chats nuevos heredan el valor por defecto de los ajustes.
 - **Ajustes propios** en **Settings > Voice**, sin tocar `opencode.json` salvo para cargar el plugin.
 

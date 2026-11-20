@@ -30,11 +30,16 @@ export function createSpeech(ctx: Ctx): Speech {
   let generation = 0
   let queue: Promise<void> = Promise.resolve()
   let lastError = ""
+  /** Reply that was stopped, so its remaining blocks stay silent instead of resuming. */
+  let hushed = ""
+  /** Block being read, used to silence the rest of its reply when it is stopped. */
+  let currentID = ""
 
   const perform = async (text: string, id: string, ticket: number) => {
     const clean = plainText(text)
     if (!clean) return
 
+    currentID = id
     setSpeaking(true)
     try {
       for (const [index, part] of chunk(clean, CHUNK_SIZE).entries()) {
@@ -76,6 +81,10 @@ export function createSpeech(ctx: Ctx): Speech {
   }
 
   const speak: Speak = (text, id) => {
+    // A reply the user cut keeps quiet: its remaining blocks belong to that reply.
+    if (hushed && id.startsWith(hushed)) return Promise.resolve()
+    if (hushed) hushed = ""
+
     const ticket = generation
     const job = queue.then(() => (ticket === generation ? perform(text, id, ticket) : undefined))
     queue = job.catch(() => {})
@@ -83,9 +92,14 @@ export function createSpeech(ctx: Ctx): Speech {
   }
 
   const cancel = () => {
+    if (currentID) {
+      const cut = currentID.lastIndexOf(":")
+      hushed = cut > 0 ? currentID.slice(0, cut) : currentID
+    }
     generation++
     queue = Promise.resolve()
     lastError = ""
+    currentID = ""
     player.stop()
     setSpeaking(false)
   }
