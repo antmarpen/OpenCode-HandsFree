@@ -21,6 +21,8 @@ export interface Dictation {
   begin(): void
   /** Drops what was captured, such as a reply being played, and holds the pre-roll. */
   reset(): void
+  /** Keeps only the last moments of the buffer and starts accumulating from there. */
+  trim(seconds: number): void
   cancel(): void
 }
 
@@ -209,6 +211,7 @@ export function createDictation(ctx: Ctx, deliver: Deliver, interrupt: () => voi
     listen: () => (handle ? Promise.resolve(false) : start(true, false)),
     begin: () => handle?.begin(),
     reset: () => handle?.reset(),
+    trim: (seconds) => handle?.trim(seconds),
     cancel,
   }
 }

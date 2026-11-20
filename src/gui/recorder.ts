@@ -17,6 +17,8 @@ export interface RecordingHandle {
   begin(): void
   /** Drops the buffer and goes back to the pre-roll, e.g. after cutting playback. */
   reset(): void
+  /** Keeps only the last `seconds` of audio and starts accumulating from there. */
+  trim(seconds: number): void
 }
 
 export interface RecordingOptions {
@@ -118,6 +120,18 @@ export async function startRecording(options: RecordingOptions = {}): Promise<Re
       chunks.length = 0
       held = 0
       holding = true
+    },
+    trim(seconds) {
+      const limit = Math.ceil(seconds * sourceRate)
+      let kept = 0
+      let index = chunks.length - 1
+      while (index >= 0 && kept + chunks[index].length <= limit) {
+        kept += chunks[index].length
+        index--
+      }
+      chunks.splice(0, index + 1)
+      held = kept
+      holding = false
     },
     async stop() {
       teardown()

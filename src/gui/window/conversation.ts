@@ -26,12 +26,18 @@ const TICK_MS = 80
 const VOICE_LEVEL = 0.22
 /**
  * While a reply is read, the microphone also hears it, so ask for a little more level
- * and for a longer moment than a normal turn.
+ * and for a longer moment than a normal turn. Two ticks is enough to tell a voice from
+ * a noise; the user feels anything longer as a lag before the reply stops.
  */
 const BARGE_LEVEL = 0.3
-const BARGE_MS = 260
+const BARGE_MS = 160
 /** The first moments of a reply are its own onset reaching the microphone. */
 const BARGE_GUARD_MS = 250
+/**
+ * Audio kept from before the barge, so the syllable that triggered it is not lost: the
+ * microphone was already recording, it was only being held in the pre-roll.
+ */
+const BARGE_PREROLL_S = 0.4
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -201,12 +207,11 @@ export function createConversation(
         if (now - playSince >= BARGE_GUARD_MS) {
           if (!bargeSince) bargeSince = now
           if (now - bargeSince >= BARGE_MS) {
-            // Talking over the reply cuts it and starts the turn from this point. The
-            // silence that follows sends it, without waiting for the reply to finish.
+            // Talking over the reply cuts it and starts the turn from this point, keeping
+            // the last moments of the microphone so the first syllable survives.
             speech.cancel()
             void ctx.main(Voice).stop().catch(() => {})
-            dictation.reset()
-            dictation.begin()
+            dictation.trim(BARGE_PREROLL_S)
             heard = true
             lastVoice = now
             bargeSince = 0
