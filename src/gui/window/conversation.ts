@@ -34,13 +34,6 @@ const BARGE_QUIET_MS = 1500
 const BARGE_RESTORE_MS = 700
 /** A reply that ends while the user is still talking keeps the turn. */
 const VOICE_HOLD_MS = 600
-/** The first moments of a reply are its own onset reaching the microphone. */
-const BARGE_GUARD_MS = 250
-/**
- * Audio kept when the first sound of a turn is detected: it reaches back into the syllable
- * that woke the detector, without dragging in the reply that was playing.
- */
-const BARGE_ONSET_S = 0.45
 
 /**
  * Runs a hands-free conversation in the routed chat: listens, closes the turn after a
@@ -65,8 +58,6 @@ export function createConversation(
   let lastVoice = 0
   let suspended = false
   let wasPlaying = false
-  /** When the reply being read started playing, so its own onset is not a voice. */
-  let playSince = 0
   /** Voiced time accumulated during this playback, across the pauses between words. */
   let voiceMs = 0
   /** The reply is quietened while the user talks over it. */
@@ -212,24 +203,17 @@ export function createConversation(
       }
       voiceMs = 0
     }
-    if (playing && !wasPlaying) {
-      playSince = now
-      voiceMs = 0
-    }
+    if (playing && !wasPlaying) voiceMs = 0
     wasPlaying = playing
 
     const level = dictation.levels().at(-1) ?? 0
-    // One detector for both cases: the same level starts a turn, whether a reply plays or
-    // not. Only the first moments of a reply are skipped, where its own onset is loudest.
-    const voiced = level >= VOICE_LEVEL && (!playing || now - playSince >= BARGE_GUARD_MS)
+    // The same detector in both cases: the same level starts a turn, playing or not.
+    const voiced = level >= VOICE_LEVEL
 
     if (voiced) {
       if (!heard) {
         heard = true
-        // A reply leaves its own audio in the pre-roll: keep only the syllable that woke
-        // the detector, so the turn does not drag the reply's voice along with it.
-        if (playing) dictation.trim(BARGE_ONSET_S)
-        else dictation.begin()
+        dictation.begin()
       }
       lastVoice = now
     }
@@ -255,7 +239,6 @@ export function createConversation(
       void ctx.main(Voice).stop().catch(() => {})
       ducked = false
       voiceMs = 0
-      playSince = 0
       // The utterance just started must not be dropped as leftover reply audio.
       wasPlaying = false
     }
