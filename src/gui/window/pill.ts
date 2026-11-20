@@ -193,9 +193,10 @@ export function registerPill(
     const working = dictation.working()
     const running = conversation.running()
     const armed = conversation.armed()
-    const speaking = speech.speaking() && !recording && !working && !running && !armed
+    // A reply being read leaves the capsule open, also while the mode waits to be pressed.
+    const reading = speech.speaking() && !recording && !working && !running
 
-    if (!recording && !working && !running && !speaking) {
+    if (!recording && !working && !running && !reading) {
       return `${BASE_RULES}\n${compactRule(armed ? CONVERSATION_MASK : MIC_MASK)}`
     }
 
@@ -204,18 +205,17 @@ export function registerPill(
     // there was voice in the last second, and never while the reply's own audio plays.
     const audible = levels.slice(-12).some((level) => level > 0.15)
     const wave = recording && (!running || (audible && !speech.speaking())) ? waveMask(levels) : ""
-    const icon = working ? workingMask(frame()) : MIC_MASK
+    const icon = working ? workingMask(frame()) : armed ? CONVERSATION_MASK : MIC_MASK
     const iconColor = working
       ? "var(--color-v2-state-fg-warning, currentColor)"
       : "currentColor"
-    const action = speaking ? STOP_MASK : CANCEL_MASK
+    const action = reading ? STOP_MASK : CANCEL_MASK
 
     return `${BASE_RULES}\n${activeRule(icon, iconColor, wave, action)}`
   })
 
   /** Whether the end of the capsule currently has something to do. */
-  const hasAction = () =>
-    conversation.running() || dictation.active() || (!conversation.armed() && speech.speaking())
+  const hasAction = () => conversation.running() || dictation.active() || speech.speaking()
 
   const action = () => {
     if (conversation.running()) conversation.stop()

@@ -6,9 +6,9 @@ import type { Conversation } from "./conversation"
 import type { Dictation } from "./dictation"
 
 /**
- * A stop button next to the microphone while a reply is being read. The dictation pill
- * already carries this glyph when it can, so this pill only fills in when that one is
- * hidden, busy with a recording, or replaced by conversation mode.
+ * A stop button next to the microphone while a reply is being read. The microphone pill
+ * already carries this glyph when it can, also in conversation mode, so this pill only
+ * fills in when that one is hidden or busy with a recording.
  */
 export function registerStopPill(
   ctx: Ctx,
@@ -26,10 +26,7 @@ export function registerStopPill(
       if (conversation.running()) return undefined
 
       const integrated =
-        !conversation.armed() &&
-        !dictation.active() &&
-        status.inputReady() &&
-        readFlags(ctx, input.session).input
+        !dictation.active() && status.inputReady() && readFlags(ctx, input.session).input
       if (integrated) return undefined
 
       return {
