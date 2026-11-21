@@ -2,7 +2,7 @@
 
 Voz bidireccional manos libres para **OpenCode Desktop**.
 
-[![CI](https://github.com/antmarpen/opencode-handsfree/actions/workflows/ci.yml/badge.svg)](https://github.com/antmarpen/opencode-handsfree/actions)
+[![CI](https://github.com/antmarpen/OpenCode-HandsFree/actions/workflows/ci.yml/badge.svg)](https://github.com/antmarpen/OpenCode-HandsFree/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Desktop](https://img.shields.io/badge/OpenCode-Desktop-blue)](https://opencode.ai)
 
@@ -60,7 +60,7 @@ Fija una versión con `opencode-handsfree@0.1.0`. Reinicia OpenCode Desktop tras
 Para desarrollar, clona el repositorio, instala dependencias y compila una vez, y apunta `plugins` a la ruta absoluta:
 
 ```powershell
-git clone https://github.com/antmarpen/opencode-handsfree.git
+git clone https://github.com/antmarpen/OpenCode-HandsFree.git
 cd opencode-handsfree
 npm ci
 npm run build
@@ -100,7 +100,7 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 
 | Grabando | Transcribiendo | Modo conversación |
 | --- | --- | --- |
-| ![Píldora del compositor grabando](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-recording.png) | ![Píldora del compositor transcribiendo](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-transcribe.png) | ![Píldora del compositor en modo conversación](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/conversation.png) |
+| ![Píldora del compositor grabando](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/dictate-recording.png) | ![Píldora del compositor transcribiendo](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/dictate-transcribe.png) | ![Píldora del compositor en modo conversación](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/conversation.png) |
 
 ### Encabezado del chat
 
@@ -109,7 +109,7 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 - Cada chat conserva sus interruptores en el store de sesión del plugin; los chats nuevos heredan el valor por defecto de los ajustes.
 - El interruptor de dictado es la puerta única: con él apagado no hay icono de micrófono, `Enter` y el atajo no dictan, y apagarlo mientras graba o transcribe cancela el trabajo.
 
-![Menú de voz del encabezado](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/session-header-options.png)
+![Menú de voz del encabezado](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/session-header-options.png)
 
 ### Modo conversación
 
@@ -123,11 +123,11 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 
 La página tiene tres pestañas.
 
-![Ajustes de entrada](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-input.png)
+![Ajustes de entrada](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-input.png)
 
-![Ajustes de salida](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-output.png)
+![Ajustes de salida](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-output.png)
 
-![Ajustes experimentales](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-experimental.png)
+![Ajustes experimentales](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-experimental.png)
 
 **Entrada**
 

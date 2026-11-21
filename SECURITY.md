@@ -7,7 +7,7 @@ Only the latest `0.1.x` release receives security fixes. The plugin targets the 
 ## Reporting a vulnerability
 
 Use GitHub's private vulnerability reporting: **Security → Advisories → Report a vulnerability** on
-<https://github.com/antmarpen/opencode-handsfree/security/advisories/new>.
+<https://github.com/antmarpen/OpenCode-HandsFree/security/advisories/new>.
 
 Do not open a public issue for a security problem, and never include API keys, tokens, audio recordings or personal paths in a report.
 

@@ -14,13 +14,13 @@
     "text-to-speech",
     "hands-free"
   ],
-  "homepage": "https://github.com/antmarpen/opencode-handsfree#readme",
+  "homepage": "https://github.com/antmarpen/OpenCode-HandsFree#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/antmarpen/opencode-handsfree.git"
+    "url": "git+https://github.com/antmarpen/OpenCode-HandsFree.git"
   },
   "bugs": {
-    "url": "https://github.com/antmarpen/opencode-handsfree/issues"
+    "url": "https://github.com/antmarpen/OpenCode-HandsFree/issues"
   },
   "author": "antmarpen (https://github.com/antmarpen)",
   "license": "MIT",

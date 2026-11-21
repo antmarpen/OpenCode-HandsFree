@@ -2,7 +2,7 @@
 
 Hands-free bidirectional voice for **OpenCode Desktop**.
 
-[![CI](https://github.com/antmarpen/opencode-handsfree/actions/workflows/ci.yml/badge.svg)](https://github.com/antmarpen/opencode-handsfree/actions)
+[![CI](https://github.com/antmarpen/OpenCode-HandsFree/actions/workflows/ci.yml/badge.svg)](https://github.com/antmarpen/OpenCode-HandsFree/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![OpenCode Desktop](https://img.shields.io/badge/OpenCode-Desktop-blue)](https://opencode.ai)
 
@@ -60,7 +60,7 @@ Pin a version with `opencode-handsfree@0.1.0`. Restart OpenCode Desktop after th
 For development, clone the repository, install dependencies and build once, then point `plugins` at the absolute path:
 
 ```powershell
-git clone https://github.com/antmarpen/opencode-handsfree.git
+git clone https://github.com/antmarpen/OpenCode-HandsFree.git
 cd opencode-handsfree
 npm ci
 npm run build
@@ -100,7 +100,7 @@ With `autoSend` off, the transcript is inserted into the composer for review. Wi
 
 | Recording | Transcribing | Conversation mode |
 | --- | --- | --- |
-| ![Composer pill while recording](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-recording.png) | ![Composer pill while transcribing](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-transcribe.png) | ![Composer pill in conversation mode](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/conversation.png) |
+| ![Composer pill while recording](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/dictate-recording.png) | ![Composer pill while transcribing](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/dictate-transcribe.png) | ![Composer pill in conversation mode](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/conversation.png) |
 
 ### Chat header
 
@@ -109,7 +109,7 @@ With `autoSend` off, the transcript is inserted into the composer for review. Wi
 - Every chat keeps its own switches through the plugin session store; new chats inherit the defaults from the settings.
 - The dictation switch is the single gate: when it is off there is no microphone icon, `Enter` and the shortcut do not dictate, and turning it off while recording or transcribing cancels the work.
 
-![Chat header voice menu](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/session-header-options.png)
+![Chat header voice menu](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/session-header-options.png)
 
 ### Conversation mode
 
@@ -123,11 +123,11 @@ With `autoSend` off, the transcript is inserted into the composer for review. Wi
 
 The page has three tabs.
 
-![Input settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-input.png)
+![Input settings](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-input.png)
 
-![Output settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-output.png)
+![Output settings](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-output.png)
 
-![Experimental settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-experimental.png)
+![Experimental settings](https://raw.githubusercontent.com/antmarpen/OpenCode-HandsFree/main/docs/screenshots/settings-experimental.png)
 
 **Input**
 
