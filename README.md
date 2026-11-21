@@ -98,12 +98,18 @@ With `autoSend` off, the transcript is inserted into the composer for review. Wi
 - While a reply is being read, the same pill shows a **stop** that cuts the queued audio and the current playback.
 - In conversation mode the pill switches to the conversation icon; pressing it starts the loop.
 
+| Recording | Transcribing | Conversation mode |
+| --- | --- | --- |
+| ![Composer pill while recording](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-recording.png) | ![Composer pill while transcribing](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-transcribe.png) | ![Composer pill in conversation mode](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/conversation.png) |
+
 ### Chat header
 
 - The gear is always visible and opens a popover with the two switches (input and output) aligned right and a link to **Settings > Voice**.
 - The microphone and speech-bubble icons appear only when their direction is configured.
 - Every chat keeps its own switches through the plugin session store; new chats inherit the defaults from the settings.
 - The dictation switch is the single gate: when it is off there is no microphone icon, `Enter` and the shortcut do not dictate, and turning it off while recording or transcribing cancels the work.
+
+![Chat header voice menu](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/session-header-options.png)
 
 ### Conversation mode
 
@@ -116,6 +122,12 @@ With `autoSend` off, the transcript is inserted into the composer for review. Wi
 ## Settings > Voice
 
 The page has three tabs.
+
+![Input settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-input.png)
+
+![Output settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-output.png)
+
+![Experimental settings](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-experimental.png)
 
 **Input**
 

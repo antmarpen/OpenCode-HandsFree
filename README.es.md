@@ -98,12 +98,18 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 - Mientras se lee una respuesta, esa misma píldora muestra un **stop** que corta la cola y el audio en curso.
 - En modo conversación la píldora cambia al icono de conversación; al pulsarla empieza el ciclo.
 
+| Grabando | Transcribiendo | Modo conversación |
+| --- | --- | --- |
+| ![Píldora del compositor grabando](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-recording.png) | ![Píldora del compositor transcribiendo](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/dictate-transcribe.png) | ![Píldora del compositor en modo conversación](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/conversation.png) |
+
 ### Encabezado del chat
 
 - El engranaje está siempre visible y abre un popover con los dos interruptores (entrada y salida) alineados a la derecha y el acceso a **Settings > Voice**.
 - Los iconos de micrófono y de bocadillo aparecen solo si su dirección está configurada.
 - Cada chat conserva sus interruptores en el store de sesión del plugin; los chats nuevos heredan el valor por defecto de los ajustes.
 - El interruptor de dictado es la puerta única: con él apagado no hay icono de micrófono, `Enter` y el atajo no dictan, y apagarlo mientras graba o transcribe cancela el trabajo.
+
+![Menú de voz del encabezado](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/session-header-options.png)
 
 ### Modo conversación
 
@@ -116,6 +122,12 @@ Con `autoSend` desactivado, el texto se inserta en el compositor para revisarlo.
 ## Settings > Voice
 
 La página tiene tres pestañas.
+
+![Ajustes de entrada](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-input.png)
+
+![Ajustes de salida](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-output.png)
+
+![Ajustes experimentales](https://raw.githubusercontent.com/antmarpen/opencode-handsfree/main/docs/screenshots/settings-experimental.png)
 
 **Entrada**
 
