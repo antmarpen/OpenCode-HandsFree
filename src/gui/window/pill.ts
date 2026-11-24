@@ -134,7 +134,10 @@ function activeRule(icon: string, iconColor: string, wave: string, action: strin
 [data-slot=session-plugin-pill][aria-label$="${MARK}"] > svg {
   display: none;
 }
-[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span {
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span[data-composer-pill-icon] {
+  display: none;
+}
+[data-slot=session-plugin-pill][aria-label$="${MARK}"] > span[dir="auto"] {
   width: ${wave ? WAVE_WIDTH : 0}px;
   height: ${WAVE_HEIGHT}px;
   margin-inline-start: ${ICON_SIZE + ICON_GAP}px;
